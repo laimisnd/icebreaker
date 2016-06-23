@@ -6,13 +6,16 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Parcelable;
 import android.provider.SyncStateContract;
 import android.support.design.widget.FloatingActionButton;
@@ -131,6 +134,24 @@ public class MyActivity extends AppCompatActivity {
         editText.setText( Long.toString(mHailTimeoutSecs) );
     }
 
+    BTscanService mBTSrv;
+    boolean isBound = false;
+
+    private ServiceConnection myConnection = new ServiceConnection() {
+
+        public void onServiceConnected(ComponentName className,
+                                       IBinder service) {
+            BTscanService.BTLocalBinder binder = (BTscanService.BTLocalBinder) service;
+            mBTSrv = binder.getService();
+            isBound = true;
+        }
+
+        public void onServiceDisconnected(ComponentName arg0) {
+            isBound = false;
+        }
+
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -184,8 +205,20 @@ public class MyActivity extends AppCompatActivity {
         EditText editText = (EditText) findViewById(R.id.hailTimeout);
         editText.setText( Long.toString(mHailTimeoutSecs) );
 
-        timerHandler.postDelayed(timerRunnable, 0);
+        //Start service:
+        Intent srvIntent = new Intent(this, BTscanService.class);
+        startService(srvIntent);
 
+        bindService(srvIntent, myConnection, Context.BIND_AUTO_CREATE);
+
+        //TBD timerHandler.postDelayed(timerRunnable, 0);
+
+/*
+
+btSrv  = new Intent(this, BTscanService.class);
+stopService(btSrv);
+
+ */
     }
 
     @Override
@@ -201,6 +234,17 @@ public class MyActivity extends AppCompatActivity {
         this.unregisterReceiver(mReceiver);
 
         timerHandler.removeCallbacks(timerRunnable);
+
+        if (isBound) {
+            // Detach our existing connection.
+            if (myConnection != null ) {
+                unbindService(myConnection);
+                isBound = false;
+            }
+        }
+
+
+
     }
 
     long startTime = 0;
@@ -235,6 +279,20 @@ public class MyActivity extends AppCompatActivity {
         if (id == R.id.action_settings) {
             return true;
         }
+
+        if (id == R.id.action_exit) {
+
+
+            Intent srvIntent = new Intent(this, BTscanService.class);
+            stopService(srvIntent);
+
+
+
+            finishAffinity();
+
+            return true;
+        }
+
 
         return super.onOptionsItemSelected(item);
     }
@@ -384,6 +442,13 @@ public class MyActivity extends AppCompatActivity {
 
         //-------------------------------------------------------
         mIter++;
+
+        //TBD timerHandler.postDelayed(timerRunnable, 0);
+
+        addLog("srv name:"+mBTSrv.getClass().getName()+"\n");
+
+        addLog("srv ticker:" + mBTSrv.mCnt + "\n");
+
        /* BTDevice ndev=new BTDevice("name1", "addr1"+mIter, 123);
         mHailedDevs.put("addr1"+mIter, ndev);
 
