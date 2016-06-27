@@ -1,62 +1,51 @@
 package com.example.laimis.myfirstapp;
 
 import android.Manifest;
-import android.app.NotificationManager;
-import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothManager;
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
-import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.Parcelable;
-import android.provider.SyncStateContract;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.telephony.CellInfo;
-import android.telephony.CellInfoGsm;
-import android.telephony.CellInfoLte;
-import android.telephony.CellSignalStrengthGsm;
-import android.telephony.TelephonyManager;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import java.io.Serializable;
+import com.google.android.gms.appindexing.Action;
+import com.google.android.gms.appindexing.AppIndex;
+import com.google.android.gms.common.api.GoogleApiClient;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Vector;
 
 
 public class MyActivity extends AppCompatActivity {
 
 
-
     public final static String EXTRA_MESSAGE = "com.mycompany.myfirstapp.MESSAGE";
-    public final static int MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION = 123 ;
-    public final static int MY_PERMISSIONS_BLUETOOTH = 124 ;
+    public final static int MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION = 123;
+    public final static int MY_PERMISSIONS_BLUETOOTH = 124;
 
     private TextView log;
     private TextView devHist;
-    private BluetoothAdapter ba;
+    /**
+     * ATTENTION: This was auto-generated to implement the App Indexing API.
+     * See https://g.co/AppIndexing/AndroidStudio for more information.
+     */
+    private GoogleApiClient client;
+
+    /*private BluetoothAdapter ba;
     private ArrayList<String> mDevLst;
     private ArrayList<String> mPrevDevLst;
 
@@ -71,14 +60,13 @@ public class MyActivity extends AppCompatActivity {
     private BTDevice tBT;
 
     private int mHailedDevsSize = 25;
-    private long  mHailTimeoutSecs=3600*12;
+    private long  mHailTimeoutSecs=3600*12;*/
 
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
-        // Save UI state changes to the savedInstanceState.
-        // This bundle will be passed to onCreate if the process is
-        // killed and restarted.
+
+        /*
         outState.putStringArrayList("mPrevDevLst", mPrevDevLst );
         outState.putInt("mCnt", mCnt );
 
@@ -90,6 +78,7 @@ public class MyActivity extends AppCompatActivity {
         outState.putSerializable("mHailedDevs", mHailedDevs);
 
         outState.putLong("mHailTimeoutSecs", mHailTimeoutSecs);
+*/
 
         super.onSaveInstanceState(outState);
 
@@ -98,8 +87,10 @@ public class MyActivity extends AppCompatActivity {
     @Override
     public void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
-        // Restore UI state from the savedInstanceState.
-        // This bundle has also been passed to onCreate.
+
+        fetchSrvData();
+
+        /*
         mPrevDevLst = savedInstanceState.getStringArrayList("mPrevDevLst");
         mCnt = savedInstanceState.getInt("mCnt");
 
@@ -110,28 +101,43 @@ public class MyActivity extends AppCompatActivity {
 
         Map<String, BTDevice> items = (Map<String, BTDevice>) savedInstanceState.getSerializable("mHailedDevs");
         mHailedDevs.putAll(items);
+*/
 
-
-
-                Iterator< Map.Entry<String, BTDevice>> itt = mHailedDevs.entrySet().iterator();
-    BTDevice dv;int ii=0;
-    while (itt.hasNext()) {
-        ii++;
-        dv=itt.next().getValue();
-        //addDevHist(dv.name + "/" + dv.address + "/"+ (Long)(dv.time/1000) + "\n");
-        addDevHist(dv);
     }
-        addDevHist("Restored List size:"+ii);
 
-        addLog("History size:"+mHailedDevs.size() +"\n");
+    void fetchSrvData() {
+
+        if (mBTSrv == null) return;
+        clearLog();
+
+        Iterator<String> it = mBTSrv.mlog.iterator();
+        int ii = 0;
+        while (it.hasNext()) {
+            ii++;
+            addLog(it.next());
+        }
+//------------------------------------
+        clearDevHist();
+        Iterator<Map.Entry<String, BTDevice>> itt = mBTSrv.mHailedDevs.entrySet().iterator();
+        BTDevice dv;
+        ii = 0;
+        while (itt.hasNext()) {
+            ii++;
+            dv = itt.next().getValue();
+            //addDevHist(dv.name + "/" + dv.address + "/"+ (Long)(dv.time/1000) + "\n");
+            addDevHist(dv);
+        }
+        addDevHist("Restored List size:" + ii);
+//------------------------------------
+        addLog("History size:" + mBTSrv.mHailedDevs.size() + "\n");
 
         /*Iterator<String> itd = mHailedDevLst.iterator();
         while (itd.hasNext()) {
             addDevHist(itd.next().toString());
         }*/
-        mHailTimeoutSecs = savedInstanceState.getLong("mHailTimeoutSecs");
+        //mHailTimeoutSecs = savedInstanceState.getLong("mHailTimeoutSecs");
         EditText editText = (EditText) findViewById(R.id.hailTimeout);
-        editText.setText( Long.toString(mHailTimeoutSecs) );
+        editText.setText(Long.toString(mBTSrv.mHailTimeoutSecs));
     }
 
     BTscanService mBTSrv;
@@ -167,11 +173,12 @@ public class MyActivity extends AppCompatActivity {
                         .setAction("Action", null).show();
             }
         });*/
+        String message = "";
+        log = (TextView) findViewById(R.id.log);
 
-        log= (TextView) findViewById(R.id.log);
+        devHist = (TextView) findViewById(R.id.devhist);
 
-        devHist= (TextView) findViewById(R.id.devhist);
-
+        /*
         IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
         this.registerReceiver(mReceiver, filter);
 
@@ -201,142 +208,11 @@ public class MyActivity extends AppCompatActivity {
 
 
         startTime = System.currentTimeMillis();
-
-        EditText editText = (EditText) findViewById(R.id.hailTimeout);
-        editText.setText( Long.toString(mHailTimeoutSecs) );
-
-        //Start service:
-        Intent srvIntent = new Intent(this, BTscanService.class);
-        startService(srvIntent);
-
-        bindService(srvIntent, myConnection, Context.BIND_AUTO_CREATE);
-
-        //TBD timerHandler.postDelayed(timerRunnable, 0);
-
-/*
-
-btSrv  = new Intent(this, BTscanService.class);
-stopService(btSrv);
-
- */
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-
-        // Make sure we're not doing discovery anymore
-        if ( ba != null) {
-            ba.cancelDiscovery();
-        }
-
-        // Unregister broadcast listeners
-        this.unregisterReceiver(mReceiver);
-
-        timerHandler.removeCallbacks(timerRunnable);
-
-        if (isBound) {
-            // Detach our existing connection.
-            if (myConnection != null ) {
-                unbindService(myConnection);
-                isBound = false;
-            }
-        }
+        */
 
 
-
-    }
-
-    long startTime = 0;
-    Handler timerHandler = new Handler();
-    Runnable timerRunnable = new Runnable() {
-
-        @Override
-        public void run() {
-
-
-            findNewBTs();
-
-            timerHandler.postDelayed(this, 20000);
-        }
-    };
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_my, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        if (id == R.id.action_exit) {
-
-
-            Intent srvIntent = new Intent(this, BTscanService.class);
-            stopService(srvIntent);
-
-
-
-            finishAffinity();
-
-            return true;
-        }
-
-
-        return super.onOptionsItemSelected(item);
-    }
-
-    String formatTime(long ts, String format ) {
-                return new SimpleDateFormat(format).format(new Date(ts) );
-    }
-
-
-    protected void findNewBTs() {
-
-        String message="";
-
-       /* int permissionCheck = ContextCompat.checkSelfPermission(this,
-                Manifest.permission.ACCESS_COARSE_LOCATION);
-
-        if ( permissionCheck != PackageManager.PERMISSION_GRANTED ) {
-            // Should we show an explanation?
-            ActivityCompat.requestPermissions(this,
-                new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
-                MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION);
-
-                    // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
-        // app-defined int constant. The callback method gets the
-        // result of the request.
-            message = message + "permision is not granted damn you";
-        } else {
-
-            TelephonyManager telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-
-            CellInfo c = telephonyManager.getAllCellInfo().get(0);
-
-            CellInfoLte ci = (CellInfoLte) c;
-
-            int lvl = ci.getCellSignalStrength().getLevel();
-
-//        android.telephony.SignalStrength signalStrength = new android.telephony.SignalStrength();
-
-//        CellSignalStrengthGsm cs = new  CellSignalStrengthGsm();
-
-            message = message + " level:" + lvl + " class:" + c.getClass().getName();
-        }
-*/
-//-------------------------------------------------
+        //EditText editText = (EditText) findViewById(R.id.hailTimeout);
+        //editText.setText( Long.toString(mHailTimeoutSecs) );
 
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_ADMIN) != PackageManager.PERMISSION_GRANTED
@@ -387,15 +263,222 @@ stopService(btSrv);
             return;
         }
 
-        mCnt++;
 
-        /*long millis = System.currentTimeMillis() - startTime;
-        int seconds = (int) (millis / 1000);
-        int minutes = seconds / 60;
-        int hh = minutes / 60;
+        if (mSrvStarted) {
+            StartService();
+        }
 
-        seconds = seconds % 60;
-        minutes = minutes  % 60;*/
+        //TBD timerHandler.postDelayed(timerRunnable, 0);
+
+/*
+
+btSrv  = new Intent(this, BTscanService.class);
+stopService(btSrv);
+
+ */
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        // Make sure we're not doing discovery anymore
+        /*if ( ba != null) {
+            ba.cancelDiscovery();
+        }
+
+        // Unregister broadcast listeners
+        this.unregisterReceiver(mReceiver);
+
+        timerHandler.removeCallbacks(timerRunnable);
+        */
+
+        if (isBound) {
+            // Detach our existing connection.
+            if (myConnection != null) {
+                unbindService(myConnection);
+                isBound = false;
+            }
+        }
+
+
+    }
+
+//    long startTime = 0;
+    /*Handler timerHandler = new Handler();
+    Runnable timerRunnable = new Runnable() {
+
+        @Override
+        public void run() {
+
+
+            findNewBTs();
+
+            timerHandler.postDelayed(this, 20000);
+        }
+    };
+*/
+
+    boolean mSrvStarted = true;
+
+    void StartService() {
+        //Start service:
+        Intent srvIntent = new Intent(this, BTscanService.class);
+        startService(srvIntent);
+
+        bindService(srvIntent, myConnection, Context.BIND_AUTO_CREATE);
+        addLog("Start and bind service called");
+    }
+
+    void StopService() {
+        Intent srvIntent = new Intent(this, BTscanService.class);
+        //if (myConnection != null)  unbindService(myConnection);
+        if (isBound) {
+            // Detach our existing connection.
+            if (myConnection != null) {
+                unbindService(myConnection);
+                isBound = false;
+            }
+        }
+
+        stopService(srvIntent);
+        addLog("stopService called");
+    }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_my, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        if (id == R.id.action_stop) {
+            StopService();
+            mSrvStarted = false;
+            //finishAffinity();
+
+            return true;
+        }
+
+        if (id == R.id.action_start) {
+            StartService();
+            mSrvStarted = true;
+            return true;
+        }
+
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    static String formatTime(long ts, String format) {
+        return new SimpleDateFormat(format).format(new Date(ts));
+    }
+
+
+    protected void findNewBTs() {
+
+        String message = "";
+
+       /* int permissionCheck = ContextCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_COARSE_LOCATION);
+
+        if ( permissionCheck != PackageManager.PERMISSION_GRANTED ) {
+            // Should we show an explanation?
+            ActivityCompat.requestPermissions(this,
+                new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
+                MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION);
+
+                    // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
+        // app-defined int constant. The callback method gets the
+        // result of the request.
+            message = message + "permision is not granted damn you";
+        } else {
+
+            TelephonyManager telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+
+            CellInfo c = telephonyManager.getAllCellInfo().get(0);
+
+            CellInfoLte ci = (CellInfoLte) c;
+
+            int lvl = ci.getCellSignalStrength().getLevel();
+
+//        android.telephony.SignalStrength signalStrength = new android.telephony.SignalStrength();
+
+//        CellSignalStrengthGsm cs = new  CellSignalStrengthGsm();
+
+            message = message + " level:" + lvl + " class:" + c.getClass().getName();
+        }
+*/
+//-------------------------------------------------
+
+/*
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_ADMIN) != PackageManager.PERMISSION_GRANTED
+                ) {
+            // Should we show an explanation?
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.BLUETOOTH_ADMIN},
+                    MY_PERMISSIONS_BLUETOOTH);
+
+            // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
+            // app-defined int constant. The callback method gets the
+            // result of the request.
+            message = message + "BT permision is not granted damn you";
+            log.setText(message);
+
+            return;
+        }
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH) != PackageManager.PERMISSION_GRANTED
+                ) {
+            // Should we show an explanation?
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.BLUETOOTH},
+                    MY_PERMISSIONS_BLUETOOTH);
+
+            // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
+            // app-defined int constant. The callback method gets the
+            // result of the request.
+            message = message + "BT permision is not granted damn you";
+            log.setText(message);
+
+            return;
+        }
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                ) {
+            // Should we show an explanation?
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
+                    MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION);
+
+            // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
+            // app-defined int constant. The callback method gets the
+            // result of the request.
+            message = message + "ACCESS_COARSE_LOCATION permision is not granted damn you";
+            log.setText(message);
+
+            return;
+        }
+
+        //mCnt++;
+
+
 
         //addLog(String.format("#%d %d:%02d:%02d ", mCnt, hh, minutes, seconds));
         addLog(String.format("#%d ", mCnt) + formatTime(System.currentTimeMillis(),"yy/MM/dd HH:mm:ss") +"\n" );
@@ -426,6 +509,7 @@ stopService(btSrv);
         //Intent intent = new Intent(this, DisplayMessageActivity.class);
         //intent.putExtra(EXTRA_MESSAGE, message);
         //startActivity(intent);
+        */
     }
 
 
@@ -438,14 +522,16 @@ stopService(btSrv);
         //tBT.time++;
         //addLog(tBT.name  + "/" + tBT.address + "/" + tBT.time);
         EditText editText = (EditText) findViewById(R.id.hailTimeout);
-        mHailTimeoutSecs = Long.parseLong (editText.getText().toString());
+        mBTSrv.mHailTimeoutSecs = Long.parseLong(editText.getText().toString());
+
+        fetchSrvData();
 
         //-------------------------------------------------------
-        mIter++;
+        //mIter++;
 
         //TBD timerHandler.postDelayed(timerRunnable, 0);
 
-        addLog("srv name:"+mBTSrv.getClass().getName()+"\n");
+        addLog("srv name:" + mBTSrv.getClass().getName() + "\n");
 
         addLog("srv ticker:" + mBTSrv.mCnt + "\n");
 
@@ -474,13 +560,13 @@ stopService(btSrv);
     }
 
     protected void addDevHist(BTDevice d) {
-        addDevHist(d.name + "/" + d.address + "/hailed: #"+ d.hailCount +" " + formatTime(d.time, "HH:mm:ss") + "/found:" + formatTime(d.firstTime, "yy.MM.dd HH:mm:ss") + "\n");
+        addDevHist(d.name + "/" + d.address + "/hailed: #" + d.hailCount + " " + formatTime(d.time, "HH:mm:ss") + "/found:" + formatTime(d.firstTime, "yy.MM.dd HH:mm:ss") + "\n");
     }
 
     protected void addDevHist(String s) {
 
-        String message=devHist.getText().toString();
-        message = message + s ;
+        String message = devHist.getText().toString();
+        message = message + s;
         devHist.setText(message);
 
     }
@@ -492,8 +578,8 @@ stopService(btSrv);
 
     protected void addLog(String s) {
 
-        String message=log.getText().toString();
-        message = message + s ;
+        String message = log.getText().toString();
+        message = message + s;
         log.setText(message);
 
     }
@@ -504,11 +590,51 @@ stopService(btSrv);
 
     }
 
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client.connect();
+        Action viewAction = Action.newAction(
+                Action.TYPE_VIEW, // TODO: choose an action type.
+                "My Page", // TODO: Define a title for the content shown.
+                // TODO: If you have web page content that matches this app activity's content,
+                // make sure this auto-generated web page URL is correct.
+                // Otherwise, set the URL to null.
+                Uri.parse("http://host/path"),
+                // TODO: Make sure this auto-generated app URL is correct.
+                Uri.parse("android-app://com.example.laimis.myfirstapp/http/host/path")
+        );
+        AppIndex.AppIndexApi.start(client, viewAction);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        Action viewAction = Action.newAction(
+                Action.TYPE_VIEW, // TODO: choose an action type.
+                "My Page", // TODO: Define a title for the content shown.
+                // TODO: If you have web page content that matches this app activity's content,
+                // make sure this auto-generated web page URL is correct.
+                // Otherwise, set the URL to null.
+                Uri.parse("http://host/path"),
+                // TODO: Make sure this auto-generated app URL is correct.
+                Uri.parse("android-app://com.example.laimis.myfirstapp/http/host/path")
+        );
+        AppIndex.AppIndexApi.end(client, viewAction);
+        client.disconnect();
+    }
+
     /**
      * The BroadcastReceiver that listens for discovered devices and changes the title when
      * discovery is finished
      */
-
+/*
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -574,77 +700,13 @@ stopService(btSrv);
 
                         }
 
-                        //clean old devices
-                        /*
-                        int msz=mHailedDevs.size();
-                        if ( msz > mHailedDevsSize) {
-                            addLog("cleanup started, list size:"+msz+"\n");
-                            Iterator< Map.Entry<String, BTDevice>> itt = mHailedDevs.entrySet().iterator();
 
-                            while (itt.hasNext()) {
-
-                                if ( itt.next().getValue().time + 1000 * mHailTimeoutSecs < System.currentTimeMillis()  ) {
-                                    itt.remove();
-                                    msz--;
-
-                                    if (msz<=mHailedDevsSize) break;
-                                }
-                            }
-                            addLog("cleanup ended, list size:"+msz+"\n");
-                        }*/
-
-
-
-/*
-                        //try to find this device in the list.
-                        boolean bfound=false;
-                        boolean btoosoon=false;
-                        for (int i = 0; i < mHailedDevLst.size(); i++) {
-                            if ( mHailedDevLst.get(i).equals(device.getAddress()) ) {
-                                bfound=true;
-                                if ( System.currentTimeMillis() - Long.parseLong(mHailedDevTimeLst.get(i).toString()) < 1000 * 3600 * 12 )
-                                        btoosoon=true;
-                            }
-                        }
-                        if (bfound) {
-                            if (btoosoon) {
-                                addLog("Too soon to hail again\n");
-                            } else {
-                                addLog("***HAILING***\n");
-                            }
-                        } else {
-                            addLog("New device in the list\n");
-                            addLog("***HAILING***\n");
-                            mHailedDevLst.add(device.getAddress());
-                            mHailedDevTimeLst.add(  new Long (System.currentTimeMillis()).toString()  );
-                            addDevHist(device.getName() + "\n");
-                        }*/
-
-                        //clean old devices
-                        /*
-                        Iterator<String> itt = mHailedDevTimeLst.iterator();
-                        Iterator<String> itd = mHailedDevLst.iterator();
-                        long tm;
-                        while (itt.hasNext()) {
-
-                            tm=Long.parseLong(itt.next().toString());
-                            if (itd.hasNext())
-                                itd.next();
-                            else break; //damn error, lists are desynced
-                            if ( tm + 1000 * 3600 * 12 < System.currentTimeMillis()  ) {
-                                itt.remove();
-                                itd.remove();
-                            }
-                                // If you know it's unique, you could `break;` here
-                        } */
 
 
 
                     }
 
-                    //TBD mNewDevicesArrayAdapter.add(device.getName() + "\n" + device.getAddress());
-                    //android:id="@+id/edit_message
-                    //findViewById(R.id.edit_message);
+
 
                 }
                 // When discovery is finished, change the Activity title
@@ -654,14 +716,9 @@ stopService(btSrv);
 
                 addLog( "Finished discovery: found "+ mPrevDevLst.size() +" devices\n"  );
 
-                //setProgressBarIndeterminateVisibility(false);
-                //setTitle(R.string.select_device);
-                //if (mNewDevicesArrayAdapter.getCount() == 0) {
-                //    String noDevices = getResources().getText(R.string.none_found).toString();
-               //     mNewDevicesArrayAdapter.add(noDevices);
-               // }
+
             }
         }
     };
-
+*/
 }
