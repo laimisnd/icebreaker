@@ -1,6 +1,8 @@
 package com.example.laimis.myfirstapp;
 
 import android.Manifest;
+import android.app.Notification;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -11,6 +13,8 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Binder;
 import android.os.IBinder;
+import android.provider.SyncStateContract;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 
 import java.text.SimpleDateFormat;
@@ -24,6 +28,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class BTscanService extends Service {
+
+    public static int NOTIFICATION_ID_FOREGROUND_SERVICE=123;
 
     int mStartMode=START_STICKY;       // indicates how to behave if the service is killed
     private final IBinder myBinder = new BTLocalBinder();
@@ -115,13 +121,13 @@ public class BTscanService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
+        startTime = System.currentTimeMillis();
+
         ba = BluetoothAdapter.getDefaultAdapter();
         if ( ba == null ) {
             //tbd: report start failure somehow...
             addLog("ERROR: BluetoothAdapter.getDefaultAdapter returns null");
         } else {
-
-            startTime = System.currentTimeMillis();
 
 
             timer.scheduleAtFixedRate(
@@ -133,6 +139,33 @@ public class BTscanService extends Service {
                     0,
                     UPDATE_INTERVAL);
         }
+
+        Intent notificationIntent = new Intent(this, MyActivity.class);
+
+        //notificationIntent.setAction(SyncStateContract.Constants.ACTION.MAIN_ACTION);
+
+        notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+
+
+        Notification notification = new NotificationCompat.Builder(this)
+                .setContentTitle("Icebreaker")
+                .setTicker("Icebreaker")
+                .setContentText("Icebreaking")
+                .setSmallIcon(R.drawable.ic_icebreaker)
+                //.setLargeIcon(Bitmap.createScaledBitmap(icon, 128, 128, false))
+                .setContentIntent(pendingIntent)
+                .setOngoing(true)
+                .setWhen(System.currentTimeMillis())
+                //.addAction(android.R.drawable.ic_media_previous,"Previous", ppreviousIntent)
+                //.addAction(android.R.drawable.ic_media_play, "Play",pplayIntent)
+                //.addAction(android.R.drawable.ic_media_next, "Next",pnextIntent)
+                .build();
+
+        startForeground(NOTIFICATION_ID_FOREGROUND_SERVICE, notification);
+
 
         // The service is starting, due to a call to startService()
         return mStartMode;

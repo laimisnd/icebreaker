@@ -139,7 +139,7 @@ public class MyActivity extends AppCompatActivity {
         //mHailTimeoutSecs = savedInstanceState.getLong("mHailTimeoutSecs");
 
         //editText.setText(Long.toString(mBTSrv.mHailTimeoutSecs));
-        hailTimeout.setText("1");
+        hailTimeout.setText(Long.toString(mBTSrv.mHailTimeoutSecs));
 
     }
 
@@ -527,7 +527,12 @@ stopService(btSrv);
         //tBT.time++;
         //addLog(tBT.name  + "/" + tBT.address + "/" + tBT.time);
         //EditText editText = (EditText) findViewById(R.id.hailTimeout);
-        mBTSrv.mHailTimeoutSecs = Long.parseLong(hailTimeout.getText().toString());
+        //Caused by: java.lang.NumberFormatException: Invalid long: ""
+        try {
+            mBTSrv.mHailTimeoutSecs = Long.parseLong(hailTimeout.getText().toString());
+        } catch (NumberFormatException ex){
+            addLog("ERROR: hailTimeout EditText is not a number +\n" );
+        }
 
         fetchSrvData();
 
@@ -539,6 +544,8 @@ stopService(btSrv);
         addLog("srv name:" + mBTSrv.getClass().getName() + "\n");
 
         addLog("srv ticker:" + mBTSrv.mCnt + "\n");
+
+        addLog("srv mHailTimeoutSecs:" + mBTSrv.mHailTimeoutSecs + "\n");
 
        /* BTDevice ndev=new BTDevice("name1", "addr1"+mIter, 123);
         mHailedDevs.put("addr1"+mIter, ndev);
