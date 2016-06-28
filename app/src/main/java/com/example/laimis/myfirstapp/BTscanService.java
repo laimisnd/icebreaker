@@ -4,7 +4,6 @@ import android.Manifest;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -17,9 +16,9 @@ import android.support.v4.content.ContextCompat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -44,9 +43,6 @@ public class BTscanService extends Service {
 
     public LinkedHashMap<String, BTDevice> mHailedDevs;
 
-    private int mIter=0;
-
-    private BTDevice tBT;
 
     private int mHailedDevsSize = 25;
     public  long  mHailTimeoutSecs=3600*12;
@@ -59,18 +55,9 @@ public class BTscanService extends Service {
         //mlog.clear();
     }
 
-    protected void addDevHist(BTDevice d) {
-        //addDevHist(d.name + "/" + d.address + "/hailed: #"+ d.hailCount +" " + formatTime(d.time, "HH:mm:ss") + "/found:" + formatTime(d.firstTime, "yy.MM.dd HH:mm:ss") + "\n");
-    }
-
-    public void addDevHist(String msg) {
-    }
-
-    public void clearDevHist(){
-    }
 
     static String formatTime(long ts, String format ) {
-        return new SimpleDateFormat(format).format(new Date(ts) );
+        return new SimpleDateFormat(format, Locale.US).format(new Date(ts) );
     }
 
     public BTscanService() {
@@ -93,7 +80,7 @@ public class BTscanService extends Service {
     @Override
     public void onCreate() {
 
-        mlog=new LinkedList<String>() ;
+        mlog=new LinkedList<>() ;
         // The service is being created
 
         IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
@@ -102,12 +89,13 @@ public class BTscanService extends Service {
         filter = new IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
         this.registerReceiver(mReceiver, filter);
 
-        mDevLst = new ArrayList<String>();
-        mPrevDevLst = new ArrayList<String>();
+        mDevLst = new ArrayList<>();
+        mPrevDevLst = new ArrayList<>();
 
 
-        BluetoothManager btm = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
-        ba = btm.getAdapter();
+        //BluetoothManager btm = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+        //ba = btm.getAdapter();
+
 
         addLog("Created\n");
         addLog("mPrevDevLst size: " +mPrevDevLst.size()+ "\n");
@@ -120,22 +108,32 @@ public class BTscanService extends Service {
             }};
 
 
-        startTime = System.currentTimeMillis();
 
-
-        timer.scheduleAtFixedRate(
-                new TimerTask() {
-                    public void run() {
-                        doBTscan();
-                    }
-                },
-                0,
-                UPDATE_INTERVAL);
 
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+
+        ba = BluetoothAdapter.getDefaultAdapter();
+        if ( ba == null ) {
+            //tbd: report start failure somehow...
+            addLog("ERROR: BluetoothAdapter.getDefaultAdapter returns null");
+        } else {
+
+            startTime = System.currentTimeMillis();
+
+
+            timer.scheduleAtFixedRate(
+                    new TimerTask() {
+                        public void run() {
+                            doBTscan();
+                        }
+                    },
+                    0,
+                    UPDATE_INTERVAL);
+        }
+
         // The service is starting, due to a call to startService()
         return mStartMode;
     }
@@ -228,8 +226,12 @@ public class BTscanService extends Service {
         minutes = minutes  % 60;*/
 
             //addLog(String.format("#%d %d:%02d:%02d ", mCnt, hh, minutes, seconds));
-            addLog(String.format("#%d ", mCnt) + formatTime(System.currentTimeMillis(),"yy/MM/dd HH:mm:ss") +"\n" );
+            addLog(String.format(Locale.US, "#%d ", mCnt) + formatTime(System.currentTimeMillis(),"yy/MM/dd HH:mm:ss") +"\n" );
 
+            if ( ba == null ) {
+                addLog("ERROR: Bluetooth adapter is null. Try starting the service again");
+                return;
+            }
 
             if (ba.isDiscovering()) {
                 addLog("BT discovery in progress...\n");
@@ -238,7 +240,7 @@ public class BTscanService extends Service {
 
 
                 clearLog();
-                addLog(String.format("#%d ", mCnt) + formatTime(System.currentTimeMillis(),"yy/MM/dd HH:mm:ss") +"\n"  );
+                addLog(String.format(Locale.US, "#%d ", mCnt) + formatTime(System.currentTimeMillis(),"yy/MM/dd HH:mm:ss") +"\n"  );
                 addLog("History size:"+mHailedDevs.size() +"\n");
                 addLog("BT discovery started, prev list size: "+mPrevDevLst.size()+" \n");
 
@@ -299,7 +301,7 @@ public class BTscanService extends Service {
                             mHailedDevs.put(device.getAddress(), ndev);
 
                             //addDevHist(device.getName() + "/" + device.getAddress() + "/"+ formatTime(st, "yy.MM.dd HH:mm:ss") + "\n");
-                            addDevHist(ndev);
+                            //addDevHist(ndev);
 
                             //MediaPlayer mediaPlayer = MediaPlayer.create(context, R.raw.hello);
                             //mediaPlayer.start(); // no need to call prepare(); create() does that for you
@@ -312,16 +314,7 @@ public class BTscanService extends Service {
                             dev.time= System.currentTimeMillis();
                             dev.hailCount++;
                             //redraw:
-                            clearDevHist();
-                            Iterator< Map.Entry<String, BTDevice>> itt = mHailedDevs.entrySet().iterator();
-                            BTDevice dv;
-                            int ii=0;
-                            while (itt.hasNext()) {
-                                ii++;
-                                dv=itt.next().getValue();
-                                addDevHist(dv);
-                            }
-                            addDevHist("List size:"+ii);
+
                             //addLog("History size:"+mHailedDevs.size() +"\n");
 
                             //MediaPlayer mediaPlayer = MediaPlayer.create(context, R.raw.hello);
@@ -405,7 +398,7 @@ public class BTscanService extends Service {
                 // When discovery is finished, change the Activity title
             } else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
                 mPrevDevLst=mDevLst;
-                mDevLst = new ArrayList<String>();
+                mDevLst = new ArrayList<>();
 
                 addLog( "Finished discovery: found "+ mPrevDevLst.size() +" devices\n"  );
 

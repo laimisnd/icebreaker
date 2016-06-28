@@ -24,9 +24,9 @@ import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.common.api.GoogleApiClient;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
 
 
@@ -39,6 +39,7 @@ public class MyActivity extends AppCompatActivity {
 
     private TextView log;
     private TextView devHist;
+    private EditText hailTimeout;
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
      * See https://g.co/AppIndexing/AndroidStudio for more information.
@@ -136,8 +137,10 @@ public class MyActivity extends AppCompatActivity {
             addDevHist(itd.next().toString());
         }*/
         //mHailTimeoutSecs = savedInstanceState.getLong("mHailTimeoutSecs");
-        EditText editText = (EditText) findViewById(R.id.hailTimeout);
-        editText.setText(Long.toString(mBTSrv.mHailTimeoutSecs));
+
+        //editText.setText(Long.toString(mBTSrv.mHailTimeoutSecs));
+        hailTimeout.setText("1");
+
     }
 
     BTscanService mBTSrv;
@@ -177,6 +180,8 @@ public class MyActivity extends AppCompatActivity {
         log = (TextView) findViewById(R.id.log);
 
         devHist = (TextView) findViewById(R.id.devhist);
+
+        hailTimeout= (EditText) findViewById(R.id.hailTimeout);
 
         /*
         IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
@@ -387,15 +392,15 @@ stopService(btSrv);
     }
 
     static String formatTime(long ts, String format) {
-        return new SimpleDateFormat(format).format(new Date(ts));
+        return new SimpleDateFormat(format, Locale.US).format(new Date(ts));
     }
 
-
+/*
     protected void findNewBTs() {
 
         String message = "";
 
-       /* int permissionCheck = ContextCompat.checkSelfPermission(this,
+        int permissionCheck = ContextCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_COARSE_LOCATION);
 
         if ( permissionCheck != PackageManager.PERMISSION_GRANTED ) {
@@ -509,9 +514,9 @@ stopService(btSrv);
         //Intent intent = new Intent(this, DisplayMessageActivity.class);
         //intent.putExtra(EXTRA_MESSAGE, message);
         //startActivity(intent);
-        */
-    }
 
+    }
+*/
 
     public void sendMessage(View view) {
 
@@ -521,8 +526,8 @@ stopService(btSrv);
         //findNewBTs();
         //tBT.time++;
         //addLog(tBT.name  + "/" + tBT.address + "/" + tBT.time);
-        EditText editText = (EditText) findViewById(R.id.hailTimeout);
-        mBTSrv.mHailTimeoutSecs = Long.parseLong(editText.getText().toString());
+        //EditText editText = (EditText) findViewById(R.id.hailTimeout);
+        mBTSrv.mHailTimeoutSecs = Long.parseLong(hailTimeout.getText().toString());
 
         fetchSrvData();
 
