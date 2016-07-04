@@ -34,7 +34,7 @@ public class BTscanService extends Service {
     int mStartMode=START_STICKY;       // indicates how to behave if the service is killed
     private final IBinder myBinder = new BTLocalBinder();
 
-    private static final long UPDATE_INTERVAL = 1000*5;
+    private static final long UPDATE_INTERVAL = 1000*30;
     private Timer timer = new Timer();
 
     public int mCnt=0;
@@ -50,7 +50,7 @@ public class BTscanService extends Service {
     public LinkedHashMap<String, BTDevice> mHailedDevs;
 
 
-    private int mHailedDevsSize = 25;
+    private int mHailedDevsSize = 100;
     public  long  mHailTimeoutSecs=3600*12;
 
     public void addLog(String msg) {
@@ -113,14 +113,6 @@ public class BTscanService extends Service {
                 return size() > mHailedDevsSize;
             }};
 
-
-
-
-    }
-
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-
         startTime = System.currentTimeMillis();
 
         ba = BluetoothAdapter.getDefaultAdapter();
@@ -165,6 +157,13 @@ public class BTscanService extends Service {
                 .build();
 
         startForeground(NOTIFICATION_ID_FOREGROUND_SERVICE, notification);
+
+
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+
 
 
         // The service is starting, due to a call to startService()

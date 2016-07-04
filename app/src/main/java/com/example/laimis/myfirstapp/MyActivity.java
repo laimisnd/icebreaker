@@ -153,6 +153,8 @@ public class MyActivity extends AppCompatActivity {
             BTscanService.BTLocalBinder binder = (BTscanService.BTLocalBinder) service;
             mBTSrv = binder.getService();
             isBound = true;
+
+            fetchSrvData();
         }
 
         public void onServiceDisconnected(ComponentName arg0) {
