@@ -6,4 +6,8 @@
     <string name="action_stop">Stop service</string>
     <string name="action_start">Start service</string>
     <string name="title_activity_display_message">Laimis Message</string>
+    <string name="label_hail_timeout">Hail timeout</string>
+    <string name="help_hail_timeout">tell me how long to wait between hailing the same device again</string>
+    <string name="label_hail_sound">Play heil sound</string>
+    <string name="help_hail_sound">turn off heil sound when tired, shy or the others are angry or looking strange at you</string>
 </resources>

@@ -17,13 +17,59 @@
     android:weightSum="1"
     android:scrollIndicators="right">
 
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="1dip"
+        android:background="#000000" />
+
+    <Switch
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/label_hail_sound"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:id="@+id/switch_heil_sound" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="@string/help_hail_sound" />
+
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="1dip"
+        android:background="#000000" />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="@string/label_hail_timeout" />
 
     <EditText
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/hailTimeout"
         android:numeric="integer"
-        android:hint="Hail timeout" />
+        android:hint="Hail timeout"
+        android:inputType="number" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="@string/help_hail_timeout" />
+
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="1dip"
+        android:background="#000000" />
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:id="@+id/editText"
+        android:inputType="time" />
 
     <Button
         android:layout_width="wrap_content"
