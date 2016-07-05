@@ -53,6 +53,8 @@ public class BTscanService extends Service {
     private int mHailedDevsSize = 100;
     public  long  mHailTimeoutSecs=3600*12;
 
+    public  boolean mPlayerSound = true;
+
     public void addLog(String msg) {
         mlog.add(msg);
         if (mlog.size()>20) mlog.removeFirst();

@@ -16,7 +16,9 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.Switch;
 import android.widget.TextView;
 
 import com.google.android.gms.appindexing.Action;
@@ -141,6 +143,10 @@ public class MyActivity extends AppCompatActivity {
         //editText.setText(Long.toString(mBTSrv.mHailTimeoutSecs));
         hailTimeout.setText(Long.toString(mBTSrv.mHailTimeoutSecs));
 
+        Switch sw=(Switch)findViewById(R.id.switch_heil_sound);
+        if (sw != null ) {
+            sw.setChecked(mBTSrv.mPlayerSound );
+        }
     }
 
     BTscanService mBTSrv;
@@ -185,7 +191,7 @@ public class MyActivity extends AppCompatActivity {
 
         hailTimeout= (EditText) findViewById(R.id.hailTimeout);
 
-        /*
+                /*
         IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
         this.registerReceiver(mReceiver, filter);
 
@@ -276,6 +282,18 @@ public class MyActivity extends AppCompatActivity {
         }
 
         //TBD timerHandler.postDelayed(timerRunnable, 0);
+
+        Switch sButton = (Switch) findViewById(R.id.switch_heil_sound);
+
+        //Set a CheckedChange Listener for Switch Button
+        if (sButton != null) {
+            sButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener(){
+                @Override
+                public void onCheckedChanged(CompoundButton cb, boolean on){
+                    mBTSrv.mPlayerSound = on;
+                }
+            });
+        }
 
 /*
 
@@ -519,6 +537,18 @@ stopService(btSrv);
 
     }
 */
+    public void sendMessageHeilSound(View view) {
+
+        addLog("sendMessageHeilSound was touched "  );
+
+        Switch sw=(Switch)findViewById(R.id.switch_heil_sound);
+        if (sw == null ) return;
+        if ( mBTSrv == null ) return;
+
+        mBTSrv.mPlayerSound = sw.isChecked();
+        addLog("sendMessageHeilSound was touched " + mBTSrv.mPlayerSound );
+
+    }
 
     public void sendMessage(View view) {
 

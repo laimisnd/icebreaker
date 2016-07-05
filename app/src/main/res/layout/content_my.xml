@@ -27,7 +27,8 @@
         android:layout_height="wrap_content"
         android:text="@string/label_hail_sound"
         android:textAppearance="?android:attr/textAppearanceLarge"
-        android:id="@+id/switch_heil_sound" />
+        android:id="@+id/switch_heil_sound"
+        />
 
     <TextView
         android:layout_width="wrap_content"
