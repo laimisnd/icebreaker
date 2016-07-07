@@ -141,12 +141,23 @@ public class MyActivity extends AppCompatActivity {
         //mHailTimeoutSecs = savedInstanceState.getLong("mHailTimeoutSecs");
 
         //editText.setText(Long.toString(mBTSrv.mHailTimeoutSecs));
-        hailTimeout.setText(Long.toString(mBTSrv.mHailTimeoutSecs));
+        hailTimeout.setText(String.valueOf(mBTSrv.mHailTimeoutSecs));
+
+        EditText btdev_dtime = (EditText) findViewById(R.id.btdev_discovery_timeout);
+        if ( btdev_dtime != null ) {
+            btdev_dtime.setText(String.valueOf(mBTSrv.mBTDiscoveryInterval));
+        }
 
         Switch sw=(Switch)findViewById(R.id.switch_heil_sound);
         if (sw != null ) {
             sw.setChecked(mBTSrv.mPlayerSound );
         }
+
+        Switch swSrv=(Switch)findViewById(R.id.switch_service_onoff);
+        if (swSrv != null ) {
+            swSrv.setChecked(isBound );
+        }
+
     }
 
     BTscanService mBTSrv;
@@ -291,6 +302,19 @@ public class MyActivity extends AppCompatActivity {
                 @Override
                 public void onCheckedChanged(CompoundButton cb, boolean on){
                     mBTSrv.mPlayerSound = on;
+                }
+            });
+        }
+
+        Switch sButtonSrv = (Switch) findViewById(R.id.switch_service_onoff);
+
+        //Set a CheckedChange Listener for Switch Button
+        if (sButtonSrv != null) {
+            sButtonSrv.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton cb, boolean on) {
+                    if (on) StartService();
+                    else StopService();
                 }
             });
         }
@@ -562,6 +586,14 @@ stopService(btSrv);
         //Caused by: java.lang.NumberFormatException: Invalid long: ""
         try {
             mBTSrv.mHailTimeoutSecs = Long.parseLong(hailTimeout.getText().toString());
+        } catch (NumberFormatException ex){
+            addLog("ERROR: hailTimeout EditText is not a number +\n" );
+        }
+
+        try {
+            EditText btdev_dtime = (EditText) findViewById(R.id.btdev_discovery_timeout);
+            if (btdev_dtime != null)
+                mBTSrv.mBTDiscoveryInterval = Long.parseLong(btdev_dtime.getText().toString());
         } catch (NumberFormatException ex){
             addLog("ERROR: hailTimeout EditText is not a number +\n" );
         }

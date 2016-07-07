@@ -6,8 +6,18 @@
     <string name="action_stop">Stop service</string>
     <string name="action_start">Start service</string>
     <string name="title_activity_display_message">Laimis Message</string>
+
     <string name="label_hail_timeout">Hail timeout</string>
-    <string name="help_hail_timeout">tell me how long to wait between hailing the same device again</string>
-    <string name="label_hail_sound">Play heil sound</string>
-    <string name="help_hail_sound">turn off heil sound when tired, shy or the others are angry or looking strange at you</string>
+    <string name="help_hail_timeout">tell me how long to wait between greet the same device again. Normal devices greet once per 24 hours</string>
+
+    <string name="label_btdev_discovery_timeout">Device discovery interval, seconds</string>
+    <string name="help_btdev_discovery_timeout">Shorter interval increase your chances to dicsover new devices but may drain more power</string>
+
+
+    <string name="label_service_onoff">Start/stop greeting service</string>
+    <string name="help_service_onoff">turn off greeting service when you want to sleep or conserve your battery a bit</string>
+
+
+    <string name="label_hail_sound">Play greeting sound</string>
+    <string name="help_hail_sound">turn off greeting sound but keep the service running when you want to see what the application does</string>
 </resources>

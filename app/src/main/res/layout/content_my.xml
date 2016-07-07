@@ -25,6 +25,25 @@
     <Switch
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:text="@string/label_service_onoff"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:id="@+id/switch_service_onoff"
+        />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="@string/help_service_onoff" />
+
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="1dip"
+        android:background="#000000" />
+
+    <Switch
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:text="@string/label_hail_sound"
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:id="@+id/switch_heil_sound"
@@ -35,6 +54,29 @@
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceSmall"
         android:text="@string/help_hail_sound" />
+
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="1dip"
+        android:background="#000000" />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="@string/label_btdev_discovery_timeout" />
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/btdev_discovery_timeout"
+        android:numeric="integer"
+        android:inputType="number" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="@string/help_btdev_discovery_timeout" />
 
     <View
         android:layout_width="fill_parent"

@@ -13,7 +13,6 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Binder;
 import android.os.IBinder;
-import android.provider.SyncStateContract;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 
@@ -34,7 +33,7 @@ public class BTscanService extends Service {
     int mStartMode=START_STICKY;       // indicates how to behave if the service is killed
     private final IBinder myBinder = new BTLocalBinder();
 
-    private static final long UPDATE_INTERVAL = 1000*30;
+    public long mBTDiscoveryInterval = 30;//seconds
     private Timer timer = new Timer();
 
     public int mCnt=0;
@@ -131,7 +130,7 @@ public class BTscanService extends Service {
                         }
                     },
                     0,
-                    UPDATE_INTERVAL);
+                    mBTDiscoveryInterval*1000);
         }
 
         Intent notificationIntent = new Intent(this, MyActivity.class);
