@@ -13,6 +13,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Binder;
+import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
@@ -34,10 +35,25 @@ public class BTscanService extends Service {
     int mStartMode=START_STICKY;       // indicates how to behave if the service is killed
     private final IBinder myBinder = new BTLocalBinder();
 
-    public long mBTDiscoveryInterval = 30;//seconds
-    private Timer timer = new Timer();
+    private long mBTDiscoveryInterval = 30;//seconds
+    //private Timer timer = new Timer();
+    /*private TimerTask ttask = new TimerTask() {
+        public void run() {
+            doBTscan();
+        }
+    };*/
+    //runs without a timer by reposting this handler at the end of the runnable
+    boolean mDestroyed = false;
+    Handler timerHandler = new Handler();
+    Runnable timerRunnable = new Runnable() {
+        @Override
+        public void run() {
+            doBTscan();
+            timerHandler.postDelayed(this, mBTDiscoveryInterval*1000);
+        }
+    };
 
-    public int mCnt=0;
+        public int mCnt=0;
 
     long startTime = 0;
 
@@ -71,6 +87,28 @@ public class BTscanService extends Service {
     public BTscanService() {
     }
 
+    public long getBTDiscoveryInterval(){ return mBTDiscoveryInterval;}
+
+    public void setBTDiscoveryInterval(long pBTDiscoveryInterval) {
+
+        mBTDiscoveryInterval=pBTDiscoveryInterval;
+        if (!mDestroyed) {
+            timerHandler.removeCallbacks(timerRunnable);
+            timerHandler.postDelayed(timerRunnable, 0);
+        }
+        /*if (timer==null || ttask==null ) return;
+
+        ttask.cancel();
+        try {
+            ttask = new TimerTask() {
+                public void run() {
+                    doBTscan();
+                }
+            };
+            timer.scheduleAtFixedRate(ttask, 0, mBTDiscoveryInterval * 1000 );
+        } catch  (java.lang.IllegalStateException e)
+        {}*/
+    }
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -105,7 +143,7 @@ public class BTscanService extends Service {
         //ba = btm.getAdapter();
 
 
-        addLog("Created\n");
+        addLog("Service Created\n");
         addLog("mPrevDevLst size: " +mPrevDevLst.size()+ "\n");
 
 
@@ -124,14 +162,15 @@ public class BTscanService extends Service {
         } else {
 
 
-            timer.scheduleAtFixedRate(
+            /*timer.scheduleAtFixedRate(
                     new TimerTask() {
                         public void run() {
                             doBTscan();
                         }
                     },
                     0,
-                    mBTDiscoveryInterval*1000);
+                    mBTDiscoveryInterval*1000);*/
+            timerHandler.postDelayed(timerRunnable, 0);
         }
 
         Intent notificationIntent = new Intent(this, MyActivity.class);
@@ -160,7 +199,7 @@ public class BTscanService extends Service {
 
         startForeground(NOTIFICATION_ID_FOREGROUND_SERVICE, notification);
 
-
+        mDestroyed=false;
     }
 
     @Override
@@ -175,7 +214,9 @@ public class BTscanService extends Service {
     @Override
     public void onDestroy() {
         // The service is no longer used and is being destroyed
-        timer.cancel();
+        //timer.cancel();
+        //ttask.cancel();
+        timerHandler.removeCallbacks(timerRunnable);
 
         if ( ba != null) {
             ba.cancelDiscovery();
@@ -183,7 +224,7 @@ public class BTscanService extends Service {
 
         // Unregister broadcast listeners
         this.unregisterReceiver(mReceiver);
-
+        mDestroyed=true;
         super.onDestroy();
     }
 
@@ -315,9 +356,9 @@ public class BTscanService extends Service {
         hasTelephony=btc.hasService(BluetoothClass.Service.TELEPHONY);
 
         switch (numMajorClass) {
-            case BluetoothClass.Device.Major.HEALTH: s="HEALTH";
-            case BluetoothClass.Device.Major.PHONE: s="PHONE";
-            case BluetoothClass.Device.Major.WEARABLE: s="WEARABLE";
+            case BluetoothClass.Device.Major.HEALTH: s="HEALTH";break;
+            case BluetoothClass.Device.Major.PHONE: s="PHONE";break;
+            case BluetoothClass.Device.Major.WEARABLE: s="WEARABLE";break;
             default:     s = String.valueOf(numMajorClass);
         }
 

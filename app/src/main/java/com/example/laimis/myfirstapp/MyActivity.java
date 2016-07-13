@@ -82,6 +82,7 @@ public class MyActivity extends AppCompatActivity {
 
         outState.putLong("mHailTimeoutSecs", mHailTimeoutSecs);
 */
+        outState.putBoolean("mSrvStarted",mSrvStarted);
 
         super.onSaveInstanceState(outState);
 
@@ -90,6 +91,8 @@ public class MyActivity extends AppCompatActivity {
     @Override
     public void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
+
+        mSrvStarted=savedInstanceState.getBoolean("mSrvStarted");
 
         fetchSrvData();
 
@@ -111,7 +114,7 @@ public class MyActivity extends AppCompatActivity {
     void fetchSrvData() {
 
         if (mBTSrv == null) return;
-        clearLog();
+
 
         Iterator<String> it = mBTSrv.mlog.iterator();
         int ii = 0;
@@ -145,7 +148,7 @@ public class MyActivity extends AppCompatActivity {
 
         EditText btdev_dtime = (EditText) findViewById(R.id.btdev_discovery_timeout);
         if ( btdev_dtime != null ) {
-            btdev_dtime.setText(String.valueOf(mBTSrv.mBTDiscoveryInterval));
+            btdev_dtime.setText(String.valueOf(mBTSrv.getBTDiscoveryInterval()));
         }
 
         Switch sw=(Switch)findViewById(R.id.switch_heil_sound);
@@ -202,42 +205,6 @@ public class MyActivity extends AppCompatActivity {
 
         hailTimeout= (EditText) findViewById(R.id.hailTimeout);
 
-                /*
-        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
-        this.registerReceiver(mReceiver, filter);
-
-        filter = new IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
-        this.registerReceiver(mReceiver, filter);
-
-        mDevLst = new ArrayList<String>();
-        mPrevDevLst = new ArrayList<String>();
-
-        mHailedDevLst = new ArrayList<String>();
-        mHailedDevTimeLst = new ArrayList<String>();
-
-        BluetoothManager btm = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
-        ba = btm.getAdapter();
-
-        addLog("Created\n");
-        addLog("mPrevDevLst size: " +mPrevDevLst.size()+ "\n");
-
-
-        tBT = new BTDevice("name1","addr2", 999);
-
-
-        mHailedDevs  = new LinkedHashMap<String, BTDevice>(mHailedDevsSize + 1, .75F, false) {
-            protected boolean removeEldestEntry(Map.Entry eldest) {
-                return size() > mHailedDevsSize;
-            }};
-
-
-        startTime = System.currentTimeMillis();
-        */
-
-
-        //EditText editText = (EditText) findViewById(R.id.hailTimeout);
-        //editText.setText( Long.toString(mHailTimeoutSecs) );
-
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_ADMIN) != PackageManager.PERMISSION_GRANTED
                 ) {
@@ -287,7 +254,7 @@ public class MyActivity extends AppCompatActivity {
             return;
         }
 
-
+        if (savedInstanceState != null) mSrvStarted=savedInstanceState.getBoolean("mSrvStarted");
         if (mSrvStarted) {
             StartService();
         }
@@ -301,6 +268,7 @@ public class MyActivity extends AppCompatActivity {
             sButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener(){
                 @Override
                 public void onCheckedChanged(CompoundButton cb, boolean on){
+                    if (mBTSrv == null) return;
                     mBTSrv.mPlayerSound = on;
                 }
             });
@@ -380,6 +348,7 @@ stopService(btSrv);
 
         bindService(srvIntent, myConnection, Context.BIND_AUTO_CREATE);
         addLog("Start and bind service called");
+        mSrvStarted=true;
     }
 
     void StopService() {
@@ -395,6 +364,7 @@ stopService(btSrv);
 
         stopService(srvIntent);
         addLog("stopService called");
+        mSrvStarted=false;
     }
 
 
@@ -419,7 +389,6 @@ stopService(btSrv);
 
         if (id == R.id.action_stop) {
             StopService();
-            mSrvStarted = false;
             //finishAffinity();
 
             return true;
@@ -427,7 +396,6 @@ stopService(btSrv);
 
         if (id == R.id.action_start) {
             StartService();
-            mSrvStarted = true;
             return true;
         }
 
@@ -576,14 +544,18 @@ stopService(btSrv);
 
     public void sendMessage(View view) {
 
-        //EditText editText = (EditText) findViewById(R.id.edit_message);
-        //String message = editText.getText().toString();
 
-        //findNewBTs();
-        //tBT.time++;
-        //addLog(tBT.name  + "/" + tBT.address + "/" + tBT.time);
-        //EditText editText = (EditText) findViewById(R.id.hailTimeout);
-        //Caused by: java.lang.NumberFormatException: Invalid long: ""
+        clearLog();
+        if (mBTSrv==null)
+        {
+            addLog("Start the service if you want to do anything\n" );
+            return;
+        }
+        else
+        {
+            addLog(formatTime(System.currentTimeMillis(), "HH:mm:ss")+"Service ref found\n");
+        }
+
         try {
             mBTSrv.mHailTimeoutSecs = Long.parseLong(hailTimeout.getText().toString());
         } catch (NumberFormatException ex){
@@ -593,7 +565,7 @@ stopService(btSrv);
         try {
             EditText btdev_dtime = (EditText) findViewById(R.id.btdev_discovery_timeout);
             if (btdev_dtime != null)
-                mBTSrv.mBTDiscoveryInterval = Long.parseLong(btdev_dtime.getText().toString());
+                mBTSrv.setBTDiscoveryInterval(Long.parseLong(btdev_dtime.getText().toString()));
         } catch (NumberFormatException ex){
             addLog("ERROR: hailTimeout EditText is not a number +\n" );
         }
@@ -607,9 +579,11 @@ stopService(btSrv);
 
         addLog("srv name:" + mBTSrv.getClass().getName() + "\n");
 
-        addLog("srv ticker:" + mBTSrv.mCnt + "\n");
+        addLog("srv timer ticker:" + mBTSrv.mCnt + "\n");
 
         addLog("srv mHailTimeoutSecs:" + mBTSrv.mHailTimeoutSecs + "\n");
+        addLog("srv Timer Interval:" + mBTSrv.getBTDiscoveryInterval() + "\n");
+        addLog("srv destroyed:" + mBTSrv.mDestroyed + "\n");
 
        /* BTDevice ndev=new BTDevice("name1", "addr1"+mIter, 123);
         mHailedDevs.put("addr1"+mIter, ndev);
