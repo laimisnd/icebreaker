@@ -636,7 +636,7 @@ stopService(btSrv);
     }
 
     protected void addDevHist(BTDevice d) {
-        addDevHist(d.name + "/" + d.address + "/hailed: #" + d.hailCount + " " + formatTime(d.time, "HH:mm:ss") + "/found:" + formatTime(d.firstTime, "yy.MM.dd HH:mm:ss") + "\n");
+        addDevHist(d.name + "/" + d.address + "/hailed: #" + d.hailCount + " " + formatTime(d.time, "MM.dd HH:mm:ss") + " " + d.strMajorClass + "\n");
     }
 
     protected void addDevHist(String s) {

@@ -5,6 +5,7 @@ import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothClass;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -299,6 +300,31 @@ public class BTscanService extends Service {
      * discovery is finished
      */
 
+    private String getDeviceClassStr(BluetoothDevice bt  )
+    {
+        String s="";
+        int numMajorClass;
+        boolean hasTelephony;
+
+        if ( bt == null ) return "dev null";
+
+        BluetoothClass btc=bt.getBluetoothClass();
+        if (btc == null) return "class null";
+
+        numMajorClass= btc.getMajorDeviceClass();
+        hasTelephony=btc.hasService(BluetoothClass.Service.TELEPHONY);
+
+        switch (numMajorClass) {
+            case BluetoothClass.Device.Major.HEALTH: s="HEALTH";
+            case BluetoothClass.Device.Major.PHONE: s="PHONE";
+            case BluetoothClass.Device.Major.WEARABLE: s="WEARABLE";
+            default:     s = String.valueOf(numMajorClass);
+        }
+
+        if (hasTelephony) s=s+",Telephony";
+        return s;
+    }
+
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -311,8 +337,20 @@ public class BTscanService extends Service {
                 // If it's already paired, skip it, because it's been listed already
                 if (device.getBondState() != BluetoothDevice.BOND_BONDED) {
 
-                    addLog( "Found BDevice: " + device.getName() + " : " +  device.getAddress() + "\n" );
+                    addLog( "Found BDevice: " + device.getName() + " : " +  device.getAddress() + "  class:" + device.getBluetoothClass().getMajorDeviceClass() + "\n" );
 
+                    if ( device.getBluetoothClass() == null) {
+                        addLog( "Class is null, skipping \n" );
+                        return;
+                    }
+                    if ( ! device.getBluetoothClass().hasService(BluetoothClass.Service.TELEPHONY)
+                            && device.getBluetoothClass().getMajorDeviceClass() != BluetoothClass.Device.Major.HEALTH
+                            && device.getBluetoothClass().getMajorDeviceClass() != BluetoothClass.Device.Major.PHONE
+                            && device.getBluetoothClass().getMajorDeviceClass() != BluetoothClass.Device.Major.WEARABLE
+                            ) {
+                        addLog( "Not human BT device, skipping \n" );
+                        return;
+                    }
 
                     mDevLst.add(device.getAddress());
                     addLog( " found dev list size:" + mDevLst.size());
@@ -320,6 +358,11 @@ public class BTscanService extends Service {
                     //chgeck if new:
                     if ( mPrevDevLst.contains(device.getAddress()) ) {
                         addLog( " existing  device\n" );
+                        //update device name if not null: sometimes name comes later on
+                        BTDevice dev=mHailedDevs.get(device.getAddress());
+                        if (dev !=null)
+                            dev.name=device.getName();
+
                     } else {
                         addLog( " *** Found new device ***\n" );
 
@@ -330,14 +373,13 @@ public class BTscanService extends Service {
                             addLog("***HAILING NEW***\n");
 
                             Long st=System.currentTimeMillis();
-                            BTDevice ndev=new BTDevice(device.getName(), device.getAddress(), st );
+                            BTDevice ndev=new BTDevice(device.getName(),
+                                                        device.getAddress(),
+                                                        st,
+                                                        (device.getBluetoothClass() != null) ? device.getBluetoothClass().getMajorDeviceClass():0,
+                                                        getDeviceClassStr(device)
+                            );
                             mHailedDevs.put(device.getAddress(), ndev);
-
-                            //addDevHist(device.getName() + "/" + device.getAddress() + "/"+ formatTime(st, "yy.MM.dd HH:mm:ss") + "\n");
-                            //addDevHist(ndev);
-
-                            //MediaPlayer mediaPlayer = MediaPlayer.create(context, R.raw.hello);
-                            //mediaPlayer.start(); // no need to call prepare(); create() does that for you
 
                         } else {
                             if ( System.currentTimeMillis() - dev.time < 1000 * mHailTimeoutSecs )
@@ -346,86 +388,10 @@ public class BTscanService extends Service {
                                 addLog("***HAILING EXISTING***\n");
                             dev.time= System.currentTimeMillis();
                             dev.hailCount++;
-                            //redraw:
-
-                            //addLog("History size:"+mHailedDevs.size() +"\n");
-
-                            //MediaPlayer mediaPlayer = MediaPlayer.create(context, R.raw.hello);
-                            //mediaPlayer.start(); // no need to call prepare(); create() does that for you
 
                         }
-
-                        //clean old devices
-                        /*
-                        int msz=mHailedDevs.size();
-                        if ( msz > mHailedDevsSize) {
-                            addLog("cleanup started, list size:"+msz+"\n");
-                            Iterator< Map.Entry<String, BTDevice>> itt = mHailedDevs.entrySet().iterator();
-
-                            while (itt.hasNext()) {
-
-                                if ( itt.next().getValue().time + 1000 * mHailTimeoutSecs < System.currentTimeMillis()  ) {
-                                    itt.remove();
-                                    msz--;
-
-                                    if (msz<=mHailedDevsSize) break;
-                                }
-                            }
-                            addLog("cleanup ended, list size:"+msz+"\n");
-                        }*/
-
-
-
-/*
-                        //try to find this device in the list.
-                        boolean bfound=false;
-                        boolean btoosoon=false;
-                        for (int i = 0; i < mHailedDevLst.size(); i++) {
-                            if ( mHailedDevLst.get(i).equals(device.getAddress()) ) {
-                                bfound=true;
-                                if ( System.currentTimeMillis() - Long.parseLong(mHailedDevTimeLst.get(i).toString()) < 1000 * 3600 * 12 )
-                                        btoosoon=true;
-                            }
-                        }
-                        if (bfound) {
-                            if (btoosoon) {
-                                addLog("Too soon to hail again\n");
-                            } else {
-                                addLog("***HAILING***\n");
-                            }
-                        } else {
-                            addLog("New device in the list\n");
-                            addLog("***HAILING***\n");
-                            mHailedDevLst.add(device.getAddress());
-                            mHailedDevTimeLst.add(  new Long (System.currentTimeMillis()).toString()  );
-                            addDevHist(device.getName() + "\n");
-                        }*/
-
-                        //clean old devices
-                        /*
-                        Iterator<String> itt = mHailedDevTimeLst.iterator();
-                        Iterator<String> itd = mHailedDevLst.iterator();
-                        long tm;
-                        while (itt.hasNext()) {
-
-                            tm=Long.parseLong(itt.next().toString());
-                            if (itd.hasNext())
-                                itd.next();
-                            else break; //damn error, lists are desynced
-                            if ( tm + 1000 * 3600 * 12 < System.currentTimeMillis()  ) {
-                                itt.remove();
-                                itd.remove();
-                            }
-                                // If you know it's unique, you could `break;` here
-                        } */
-
-
 
                     }
-
-                    //TBD mNewDevicesArrayAdapter.add(device.getName() + "\n" + device.getAddress());
-                    //android:id="@+id/edit_message
-                    //findViewById(R.id.edit_message);
 
                 }
                 // When discovery is finished, change the Activity title
@@ -434,13 +400,6 @@ public class BTscanService extends Service {
                 mDevLst = new ArrayList<>();
 
                 addLog( "Finished discovery: found "+ mPrevDevLst.size() +" devices\n"  );
-
-                //setProgressBarIndeterminateVisibility(false);
-                //setTitle(R.string.select_device);
-                //if (mNewDevicesArrayAdapter.getCount() == 0) {
-                //    String noDevices = getResources().getText(R.string.none_found).toString();
-                //     mNewDevicesArrayAdapter.add(noDevices);
-                // }
             }
         }
     };

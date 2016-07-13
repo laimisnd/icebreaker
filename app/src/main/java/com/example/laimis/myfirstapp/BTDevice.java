@@ -11,11 +11,15 @@ public class BTDevice implements Serializable //extends Parcelable
     long time;
     long firstTime;
     long hailCount=1;
+    int numMajorClass;
+    String strMajorClass;
 
-    public BTDevice(String name, String address, long time){
+    public BTDevice(String name, String address, long time, int numMajorClass, String strMajorClass){
         this.name = name;
         this.address = address;
         this.firstTime= time;
         this.time=time;
+        this.numMajorClass=numMajorClass;
+        this.strMajorClass=strMajorClass;
     }
 }
