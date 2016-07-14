@@ -1,9 +1,11 @@
 package com.example.laimis.myfirstapp;
 
 import android.Manifest;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -256,6 +258,13 @@ public class MyActivity extends AppCompatActivity {
             return;
         }
 
+        IntentFilter filter = new IntentFilter(BTscanService.NOTIFICATION_HAILED);
+        this.registerReceiver(mReceiver, filter);
+
+        filter = new IntentFilter(BTscanService.NOTIFICATION_BTSCAN_FINISHED);
+        this.registerReceiver(mReceiver, filter);
+
+
         if (savedInstanceState != null) mSrvStarted=savedInstanceState.getBoolean("mSrvStarted");
         if (mSrvStarted) {
             StartService();
@@ -305,6 +314,8 @@ stopService(btSrv);
     @Override
     protected void onDestroy() {
         super.onDestroy();
+
+        this.unregisterReceiver(mReceiver);
 
         // Make sure we're not doing discovery anymore
         /*if ( ba != null) {
@@ -693,91 +704,32 @@ stopService(btSrv);
      * The BroadcastReceiver that listens for discovered devices and changes the title when
      * discovery is finished
      */
-/*
+
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             addLog( "Received action: " + action + ":\n");
             // When discovery finds a device
-            if (BluetoothDevice.ACTION_FOUND.equals(action)) {
-                // Get the BluetoothDevice object from the Intent
-                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                // If it's already paired, skip it, because it's been listed already
-                if (device.getBondState() != BluetoothDevice.BOND_BONDED) {
+            if ( action.equals(BTscanService.NOTIFICATION_HAILED) ) {
 
-                    addLog( "Found BDevice: " + device.getName() + " : " +  device.getAddress() + "\n" );
-
-
-                    mDevLst.add(device.getAddress());
-                    addLog( " found dev list size:" + mDevLst.size());
-
-                    //chgeck if new:
-                    if ( mPrevDevLst.contains(device.getAddress()) ) {
-                        addLog( " existing  device\n" );
-                    } else {
-                        addLog( " *** Found new device ***\n" );
-
-                        BTDevice dev=mHailedDevs.get(device.getAddress());
-                        if ( dev == null ) {
-
-                            addLog("New device in the list\n");
-                            addLog("***HAILING NEW***\n");
-
-                            Long st=System.currentTimeMillis();
-                            BTDevice ndev=new BTDevice(device.getName(), device.getAddress(), st );
-                            mHailedDevs.put(device.getAddress(), ndev);
-
-                            //addDevHist(device.getName() + "/" + device.getAddress() + "/"+ formatTime(st, "yy.MM.dd HH:mm:ss") + "\n");
-                            addDevHist(ndev);
-
-                            //MediaPlayer mediaPlayer = MediaPlayer.create(context, R.raw.hello);
-                            //mediaPlayer.start(); // no need to call prepare(); create() does that for you
-
-                        } else {
-                            if ( System.currentTimeMillis() - dev.time < 1000 * mHailTimeoutSecs )
-                                addLog("Too soon to hail again\n");
-                            else
-                                addLog("***HAILING EXISTING***\n");
-                                dev.time= System.currentTimeMillis();
-                                dev.hailCount++;
-                                //redraw:
-                                clearDevHist();
-                                Iterator< Map.Entry<String, BTDevice>> itt = mHailedDevs.entrySet().iterator();
-                                BTDevice dv;
-                                int ii=0;
-                                while (itt.hasNext()) {
-                                    ii++;
-                                    dv=itt.next().getValue();
-                                    addDevHist(dv);
-                                }
-                                addDevHist("List size:"+ii);
-                                //addLog("History size:"+mHailedDevs.size() +"\n");
-
-                                //MediaPlayer mediaPlayer = MediaPlayer.create(context, R.raw.hello);
-                                //mediaPlayer.start(); // no need to call prepare(); create() does that for you
-
-                        }
-
-
-
-
-
+                //TODO
+                TextView textLG = (TextView) findViewById(R.id.lastGreeted);
+                if ( textLG != null && mBTSrv != null) {
+                    if (mBTSrv.lastHailedDev != null) {
+                        textLG.setText("!!! Hailed BT Device " + mBTSrv.lastHailedDev.name + " "+ mBTSrv.lastHailedDev.strMajorClass + " !!!");
                     }
-
-
-
                 }
-                // When discovery is finished, change the Activity title
-            } else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
-                mPrevDevLst=mDevLst;
-                mDevLst = new ArrayList<String>();
 
-                addLog( "Finished discovery: found "+ mPrevDevLst.size() +" devices\n"  );
+                fetchSrvData();
+                addLog( "RECEIVED: new hail \n"  );
+            }
 
-
+            if ( action.equals(BTscanService.NOTIFICATION_BTSCAN_FINISHED) ) {
+                fetchSrvData();
+                addLog( "RECEIVED: bt scan done\n"  );
             }
         }
     };
-*/
+
 }

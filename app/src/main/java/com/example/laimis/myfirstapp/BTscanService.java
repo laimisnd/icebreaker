@@ -25,12 +25,12 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
 
 public class BTscanService extends Service {
 
     public static int NOTIFICATION_ID_FOREGROUND_SERVICE=123;
+    public static final String NOTIFICATION_HAILED="laimis.BTscanService.HAILED";
+    public static final String NOTIFICATION_BTSCAN_FINISHED="laimis.BTscanService.NOTIFICATION_BTSCAN_FINISHED";
 
     int mStartMode=START_STICKY;       // indicates how to behave if the service is killed
     private final IBinder myBinder = new BTLocalBinder();
@@ -67,6 +67,7 @@ public class BTscanService extends Service {
 
     public LinkedHashMap<String, BTDevice> mHailedDevs;
 
+    BTDevice lastHailedDev;
 
     private int mHailedDevsSize = 100;
     public  long  mHailTimeoutSecs=3600*12;
@@ -382,6 +383,14 @@ public class BTscanService extends Service {
         return s;
     }
 
+    public void hailDev(BTDevice dev){
+     //sending hail to main window
+        lastHailedDev=dev;
+        Intent intent = new Intent(NOTIFICATION_HAILED);
+        sendBroadcast (intent);
+       //TODO playing sound
+    }
+
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -438,6 +447,8 @@ public class BTscanService extends Service {
                             );
                             mHailedDevs.put(device.getAddress(), ndev);
 
+                            hailDev(ndev);
+
                         } else {
                             if ( System.currentTimeMillis() - dev.time < 1000 * mHailTimeoutSecs )
                                 addLog("Too soon to hail again\n");
@@ -445,6 +456,8 @@ public class BTscanService extends Service {
                                 addLog("***HAILING EXISTING***\n");
                             dev.time= System.currentTimeMillis();
                             dev.hailCount++;
+
+                            hailDev(dev);
 
                         }
 
@@ -457,6 +470,9 @@ public class BTscanService extends Service {
                 mDevLst = new ArrayList<>();
 
                 addLog( "Finished discovery: found "+ mPrevDevLst.size() +" devices\n"  );
+                Intent rint = new Intent(NOTIFICATION_BTSCAN_FINISHED);
+                sendBroadcast (rint);
+
             }
         }
     };
