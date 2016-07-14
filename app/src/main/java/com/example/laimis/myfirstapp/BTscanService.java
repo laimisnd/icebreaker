@@ -44,16 +44,18 @@ public class BTscanService extends Service {
     };*/
     //runs without a timer by reposting this handler at the end of the runnable
     boolean mDestroyed = false;
+    boolean mDiscoveryStarted = false;
     Handler timerHandler = new Handler();
     Runnable timerRunnable = new Runnable() {
         @Override
         public void run() {
             doBTscan();
             timerHandler.postDelayed(this, mBTDiscoveryInterval*1000);
+            mDiscoveryStarted=true;
         }
     };
 
-        public int mCnt=0;
+    public int mCnt=0;
 
     long startTime = 0;
 
@@ -92,9 +94,10 @@ public class BTscanService extends Service {
     public void setBTDiscoveryInterval(long pBTDiscoveryInterval) {
 
         mBTDiscoveryInterval=pBTDiscoveryInterval;
-        if (!mDestroyed) {
-            timerHandler.removeCallbacks(timerRunnable);
-            timerHandler.postDelayed(timerRunnable, 0);
+        if (!mDestroyed && mDiscoveryStarted) {
+            //timerHandler.removeCallbacks(timerRunnable);
+            //timerHandler.postDelayed(timerRunnable, 0);
+            startBTDiscovery();
         }
         /*if (timer==null || ttask==null ) return;
 
@@ -108,6 +111,17 @@ public class BTscanService extends Service {
             timer.scheduleAtFixedRate(ttask, 0, mBTDiscoveryInterval * 1000 );
         } catch  (java.lang.IllegalStateException e)
         {}*/
+    }
+
+    public void stopBTDiscovery() {
+        timerHandler.removeCallbacks(timerRunnable);
+        mDiscoveryStarted=false;
+    }
+
+    public void startBTDiscovery() {
+        timerHandler.removeCallbacks(timerRunnable);
+        timerHandler.postDelayed(timerRunnable, 0);
+        mDiscoveryStarted=true;
     }
 
     @Override
@@ -170,7 +184,8 @@ public class BTscanService extends Service {
                     },
                     0,
                     mBTDiscoveryInterval*1000);*/
-            timerHandler.postDelayed(timerRunnable, 0);
+            startBTDiscovery();
+            //timerHandler.postDelayed(timerRunnable, 0);
         }
 
         Intent notificationIntent = new Intent(this, MyActivity.class);
@@ -216,7 +231,8 @@ public class BTscanService extends Service {
         // The service is no longer used and is being destroyed
         //timer.cancel();
         //ttask.cancel();
-        timerHandler.removeCallbacks(timerRunnable);
+        //timerHandler.removeCallbacks(timerRunnable);
+        stopBTDiscovery();
 
         if ( ba != null) {
             ba.cancelDiscovery();

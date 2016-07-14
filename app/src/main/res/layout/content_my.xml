@@ -117,6 +117,12 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:text="@string/button_exit"
+        android:onClick="btExit" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:text="@string/button_send"
         android:onClick="sendMessage" />
 

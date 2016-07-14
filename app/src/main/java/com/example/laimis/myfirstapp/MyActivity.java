@@ -158,7 +158,9 @@ public class MyActivity extends AppCompatActivity {
 
         Switch swSrv=(Switch)findViewById(R.id.switch_service_onoff);
         if (swSrv != null ) {
-            swSrv.setChecked(isBound );
+            //swSrv.setChecked(isBound );
+            swSrv.setChecked(mBTSrv.mDiscoveryStarted);
+            addLog("mDiscoveryStarted: "+mBTSrv.mDiscoveryStarted+"\n");
         }
 
     }
@@ -281,8 +283,10 @@ public class MyActivity extends AppCompatActivity {
             sButtonSrv.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override
                 public void onCheckedChanged(CompoundButton cb, boolean on) {
-                    if (on) StartService();
-                    else StopService();
+                    if (mBTSrv == null) return;
+                    if (on) mBTSrv.startBTDiscovery(); else mBTSrv.stopBTDiscovery();
+                    addLog("discovery button:  " + on + " srv field:"+mBTSrv.mDiscoveryStarted+"\n");
+                    //if (on) StartService(); else StopService();
                 }
             });
         }
@@ -542,10 +546,15 @@ stopService(btSrv);
 
     }
 
+    public void btExit(View view) {
+        StopService();
+        System.exit(0);
+    }
+
     public void sendMessage(View view) {
 
-
         clearLog();
+
         if (mBTSrv==null)
         {
             addLog("Start the service if you want to do anything\n" );
