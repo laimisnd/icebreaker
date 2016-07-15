@@ -15,7 +15,10 @@
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:showIn="@layout/activity_my"
     android:weightSum="1"
-    android:scrollIndicators="right">
+    android:scrollIndicators="right"
+    android:descendantFocusability="beforeDescendants"
+    android:focusableInTouchMode="true"
+    >
 
     <View
         android:layout_width="fill_parent"
