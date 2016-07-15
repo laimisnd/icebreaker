@@ -18,6 +18,8 @@
     android:scrollIndicators="right"
     android:descendantFocusability="beforeDescendants"
     android:focusableInTouchMode="true"
+    android:focusable="true"
+    android:id="@+id/linear_main_layout"
     >
 
     <View

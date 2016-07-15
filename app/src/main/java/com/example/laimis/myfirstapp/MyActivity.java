@@ -20,6 +20,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.Switch;
 import android.widget.TextView;
 
@@ -344,6 +345,23 @@ stopService(btSrv);
         }
 
 
+    }
+
+
+
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        EditText mEt;
+        LinearLayout mLinearLayout;
+
+        mEt = (EditText) findViewById(R.id.btdev_discovery_timeout);
+        mLinearLayout = (LinearLayout) findViewById(R.id.linear_main_layout);
+        //do not give the editbox focus automatically when activity starts
+        if (mEt!=null)        mEt.clearFocus();
+        if (mLinearLayout!=null) mLinearLayout.requestFocus();
     }
 
 //    long startTime = 0;
