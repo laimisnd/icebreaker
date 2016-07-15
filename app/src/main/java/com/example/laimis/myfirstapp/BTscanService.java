@@ -12,9 +12,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.media.MediaPlayer;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 
@@ -360,7 +362,7 @@ public class BTscanService extends Service {
 
     private String getDeviceClassStr(BluetoothDevice bt  )
     {
-        String s="";
+        String s;
         int numMajorClass;
         boolean hasTelephony;
 
@@ -384,11 +386,22 @@ public class BTscanService extends Service {
     }
 
     public void hailDev(BTDevice dev){
-     //sending hail to main window
+
         lastHailedDev=dev;
+
+        //playing sound
+        if ( mPlayerSound ) {
+            MediaPlayer mediaPlayer = MediaPlayer.create(this.getApplicationContext(), R.raw.hello);
+            mediaPlayer.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
+            mediaPlayer.start(); // no need to call prepare(); create() does that for you
+        } else {
+            addLog("***Hailing sound turned off \n");
+        }
+
+        //sending hail to main window
         Intent intent = new Intent(NOTIFICATION_HAILED);
         sendBroadcast (intent);
-       //TODO playing sound
+
     }
 
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {

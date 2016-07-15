@@ -21,4 +21,6 @@
 
     <string name="label_hail_sound">Play greeting sound</string>
     <string name="help_hail_sound">turn off greeting sound but keep the service running when you want to see what the application does</string>
+
+    <string name="text_last_hailed_deviced">Hailed BT Device</string>
 </resources>

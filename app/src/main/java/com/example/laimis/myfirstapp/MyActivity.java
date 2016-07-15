@@ -117,6 +117,13 @@ public class MyActivity extends AppCompatActivity {
 
         if (mBTSrv == null) return;
 
+        addLog("srv name:" + mBTSrv.getClass().getName() + "\n");
+
+        addLog("srv timer ticker:" + mBTSrv.mCnt + "\n");
+
+        addLog("srv mHailTimeoutSecs:" + mBTSrv.mHailTimeoutSecs + "\n");
+        addLog("srv Timer Interval:" + mBTSrv.getBTDiscoveryInterval() + "\n");
+        addLog("srv destroyed:" + mBTSrv.mDestroyed + "\n");
 
         Iterator<String> it = mBTSrv.mlog.iterator();
         int ii = 0;
@@ -544,7 +551,7 @@ stopService(btSrv);
 
     }
 */
-    public void sendMessageHeilSound(View view) {
+    /*public void sendMessageHeilSound(View view) {
 
         addLog("sendMessageHeilSound was touched "  );
 
@@ -556,6 +563,7 @@ stopService(btSrv);
         addLog("sendMessageHeilSound was touched " + mBTSrv.mPlayerSound );
 
     }
+    */
 
     public void btExit(View view) {
         StopService();
@@ -597,13 +605,7 @@ stopService(btSrv);
 
         //TBD timerHandler.postDelayed(timerRunnable, 0);
 
-        addLog("srv name:" + mBTSrv.getClass().getName() + "\n");
 
-        addLog("srv timer ticker:" + mBTSrv.mCnt + "\n");
-
-        addLog("srv mHailTimeoutSecs:" + mBTSrv.mHailTimeoutSecs + "\n");
-        addLog("srv Timer Interval:" + mBTSrv.getBTDiscoveryInterval() + "\n");
-        addLog("srv destroyed:" + mBTSrv.mDestroyed + "\n");
 
        /* BTDevice ndev=new BTDevice("name1", "addr1"+mIter, 123);
         mHailedDevs.put("addr1"+mIter, ndev);
@@ -713,11 +715,12 @@ stopService(btSrv);
             // When discovery finds a device
             if ( action.equals(BTscanService.NOTIFICATION_HAILED) ) {
 
-                //TODO
+
                 TextView textLG = (TextView) findViewById(R.id.lastGreeted);
                 if ( textLG != null && mBTSrv != null) {
                     if (mBTSrv.lastHailedDev != null) {
-                        textLG.setText("!!! Hailed BT Device " + mBTSrv.lastHailedDev.name + " "+ mBTSrv.lastHailedDev.strMajorClass + " !!!");
+                        String s="!!! "+ R.string.text_last_hailed_deviced + " " + mBTSrv.lastHailedDev.name + " "+ mBTSrv.lastHailedDev.strMajorClass + " !!!";
+                        textLG.setText(s);
                     }
                 }
 
