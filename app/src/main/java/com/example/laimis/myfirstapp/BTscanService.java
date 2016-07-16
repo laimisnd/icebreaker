@@ -20,6 +20,8 @@ import android.os.PowerManager;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -386,13 +388,13 @@ public class BTscanService extends Service {
     }
 
     public void hailDev(BTDevice dev){
-
-        lastHailedDev=dev;
+    try {
+        lastHailedDev = dev;
 
         //playing sound
-        if ( mPlayerSound ) {
+        if (mPlayerSound) {
             MediaPlayer mediaPlayer = MediaPlayer.create(this.getApplicationContext(), R.raw.hello);
-            mediaPlayer.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
+            mediaPlayer.setWakeMode(this.getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
             mediaPlayer.start(); // no need to call prepare(); create() does that for you
         } else {
             addLog("***Hailing sound turned off \n");
@@ -400,7 +402,15 @@ public class BTscanService extends Service {
 
         //sending hail to main window
         Intent intent = new Intent(NOTIFICATION_HAILED);
-        sendBroadcast (intent);
+        sendBroadcast(intent);
+    }
+    catch (Exception e) {
+        StringWriter sw = new StringWriter();
+        e.printStackTrace(new PrintWriter(sw));
+        String exceptionAsString = sw.toString();
+        addLog(exceptionAsString);
+
+    }
 
     }
 
