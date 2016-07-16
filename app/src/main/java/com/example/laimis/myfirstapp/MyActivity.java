@@ -741,12 +741,13 @@ stopService(btSrv);
                         textLG.setText(s);
                     }
                 }
-
+                clearLog();
                 fetchSrvData();
                 addLog( "RECEIVED: new hail \n"  );
             }
 
             if ( action.equals(BTscanService.NOTIFICATION_BTSCAN_FINISHED) ) {
+                clearLog();
                 fetchSrvData();
                 addLog( "RECEIVED: bt scan done\n"  );
             }
