@@ -86,6 +86,11 @@ public class MyActivity extends AppCompatActivity {
 
         outState.putLong("mHailTimeoutSecs", mHailTimeoutSecs);
 */
+        TextView textLG = (TextView) findViewById(R.id.lastGreeted);
+        if ( textLG != null ) {
+            outState.putString("lastGreeted",textLG.getText().toString());
+        }
+
         outState.putBoolean("mSrvStarted",mSrvStarted);
 
         super.onSaveInstanceState(outState);
@@ -97,6 +102,12 @@ public class MyActivity extends AppCompatActivity {
         super.onRestoreInstanceState(savedInstanceState);
 
         mSrvStarted=savedInstanceState.getBoolean("mSrvStarted");
+
+        TextView textLG = (TextView) findViewById(R.id.lastGreeted);
+        if ( textLG != null ) {
+            String s=savedInstanceState.getString("lastGreeted");
+            textLG.setText(s);
+        }
 
         fetchSrvData();
 
