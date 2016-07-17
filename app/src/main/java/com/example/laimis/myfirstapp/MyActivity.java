@@ -41,6 +41,7 @@ public class MyActivity extends AppCompatActivity {
     public final static String EXTRA_MESSAGE = "com.mycompany.myfirstapp.MESSAGE";
     public final static int MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION = 123;
     public final static int MY_PERMISSIONS_BLUETOOTH = 124;
+    public final static int MY_PERMISSIONS_WAKE_LOCK = 125;
 
     private TextView log;
     private TextView devHist;
@@ -261,6 +262,22 @@ public class MyActivity extends AppCompatActivity {
             // app-defined int constant. The callback method gets the
             // result of the request.
             message = message + "ACCESS_COARSE_LOCATION permision is not granted damn you";
+            log.setText(message);
+
+            return;
+        }
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WAKE_LOCK) != PackageManager.PERMISSION_GRANTED
+                ) {
+            // Should we show an explanation?
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.WAKE_LOCK},
+                    MY_PERMISSIONS_WAKE_LOCK);
+
+            // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
+            // app-defined int constant. The callback method gets the
+            // result of the request.
+            message = message + "Wake Lock  permision is not granted damn you";
             log.setText(message);
 
             return;
