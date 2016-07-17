@@ -388,9 +388,9 @@ public class BTscanService extends Service {
     }
 
     public void hailDev(BTDevice dev){
-    try {
-        lastHailedDev = dev;
 
+        lastHailedDev = dev;
+        try {
         //playing sound
         if (mPlayerSound) {
             MediaPlayer mediaPlayer = MediaPlayer.create(this.getApplicationContext(), R.raw.hello);
@@ -411,7 +411,6 @@ public class BTscanService extends Service {
         addLog(exceptionAsString);
 
     }
-
     }
 
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
@@ -477,6 +476,9 @@ public class BTscanService extends Service {
                                 addLog("Too soon to hail again\n");
                             else
                                 addLog("***HAILING EXISTING***\n");
+                            addLog("dev last hail time:"+formatTime(dev.time, "yy/MM/dd HH:mm:s")+"\n");
+                            addLog("current time:"+formatTime(System.currentTimeMillis(), "yy/MM/dd HH:mm:s")+"\n");
+                            addLog("delta time between hails:"+Math.round((System.currentTimeMillis() - dev.time)/1000)+"\n");
                             dev.time= System.currentTimeMillis();
                             dev.hailCount++;
 

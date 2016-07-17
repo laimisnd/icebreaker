@@ -750,6 +750,8 @@ stopService(btSrv);
             // When discovery finds a device
             if ( action.equals(BTscanService.NOTIFICATION_HAILED) ) {
 
+                clearLog();
+                fetchSrvData();
 
                 TextView textLG = (TextView) findViewById(R.id.lastGreeted);
                 if ( textLG != null && mBTSrv != null) {
@@ -757,9 +759,12 @@ stopService(btSrv);
                         String s="!!! "+ R.string.text_last_hailed_deviced + " " + mBTSrv.lastHailedDev.name + " "+ mBTSrv.lastHailedDev.strMajorClass + " !!!";
                         textLG.setText(s);
                     }
+                    else {
+                        addLog("WARNING: lastHailedDev is null \n");
+                    }
+                } else {
+                    addLog("WARNING: lastGreeted or mBTSrv is null \n");
                 }
-                clearLog();
-                fetchSrvData();
                 addLog( "RECEIVED: new hail \n"  );
             }
 
