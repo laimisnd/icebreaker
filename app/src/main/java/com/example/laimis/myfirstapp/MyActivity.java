@@ -665,6 +665,7 @@ stopService(btSrv);
         }
 
         fetchSrvData();
+        displayLastHailed();
 
         //-------------------------------------------------------
         //mIter++;
