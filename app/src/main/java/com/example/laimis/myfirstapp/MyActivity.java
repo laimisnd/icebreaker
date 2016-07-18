@@ -204,7 +204,7 @@ public class MyActivity extends AppCompatActivity {
             swSrv.setChecked(mBTSrv.mDiscoveryStarted);
             addLog("mDiscoveryStarted: "+mBTSrv.mDiscoveryStarted+"\n");
         }
-
+        displayLastHailed();
     }
 
     BTscanService mBTSrv;
@@ -665,7 +665,7 @@ stopService(btSrv);
         }
 
         fetchSrvData();
-        displayLastHailed();
+        //displayLastHailed();
 
         //-------------------------------------------------------
         //mIter++;
@@ -784,7 +784,7 @@ stopService(btSrv);
 
                 clearLog();
                 fetchSrvData();
-                displayLastHailed();
+                //displayLastHailed();
 
                 addLog( "RECEIVED: new hail \n"  );
             }
@@ -792,6 +792,7 @@ stopService(btSrv);
             if ( action.equals(BTscanService.NOTIFICATION_BTSCAN_FINISHED) ) {
                 clearLog();
                 fetchSrvData();
+                //displayLastHailed();
                 addLog( "RECEIVED: bt scan done\n"  );
             }
         }
