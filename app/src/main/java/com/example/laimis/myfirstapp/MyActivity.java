@@ -86,10 +86,10 @@ public class MyActivity extends AppCompatActivity {
 
         outState.putLong("mHailTimeoutSecs", mHailTimeoutSecs);
 */
-        TextView textLG = (TextView) findViewById(R.id.lastGreeted);
+        /*TextView textLG = (TextView) findViewById(R.id.lastGreeted);
         if ( textLG != null ) {
             outState.putString("lastGreeted",textLG.getText().toString());
-        }
+        }*/
 
         outState.putBoolean("mSrvStarted",mSrvStarted);
 
@@ -103,13 +103,14 @@ public class MyActivity extends AppCompatActivity {
 
         mSrvStarted=savedInstanceState.getBoolean("mSrvStarted");
 
-        TextView textLG = (TextView) findViewById(R.id.lastGreeted);
+        /*TextView textLG = (TextView) findViewById(R.id.lastGreeted);
         if ( textLG != null ) {
             String s=savedInstanceState.getString("lastGreeted");
             textLG.setText(s);
-        }
+        }*/
 
         fetchSrvData();
+        displayLastHailed();
 
         /*
         mPrevDevLst = savedInstanceState.getStringArrayList("mPrevDevLst");
@@ -123,6 +124,25 @@ public class MyActivity extends AppCompatActivity {
         Map<String, BTDevice> items = (Map<String, BTDevice>) savedInstanceState.getSerializable("mHailedDevs");
         mHailedDevs.putAll(items);
 */
+
+    }
+
+    void displayLastHailed()
+    {
+
+        TextView textLG = (TextView) findViewById(R.id.lastGreeted);
+        if ( textLG != null && mBTSrv != null) {
+            if (mBTSrv.lastHailedDev != null) {
+
+                String s="!!! "+ R.string.text_last_hailed_deviced + " " + mBTSrv.lastHailedDev.name + " "+ mBTSrv.lastHailedDev.strMajorClass + " !!!";
+                textLG.setText(s);
+            }
+            else {
+                addLog("WARNING: lastHailedDev is null \n");
+            }
+        } else {
+            addLog("WARNING: lastGreeted or mBTSrv is null \n");
+        }
 
     }
 
@@ -763,19 +783,8 @@ stopService(btSrv);
 
                 clearLog();
                 fetchSrvData();
+                displayLastHailed();
 
-                TextView textLG = (TextView) findViewById(R.id.lastGreeted);
-                if ( textLG != null && mBTSrv != null) {
-                    if (mBTSrv.lastHailedDev != null) {
-                        String s="!!! "+ R.string.text_last_hailed_deviced + " " + mBTSrv.lastHailedDev.name + " "+ mBTSrv.lastHailedDev.strMajorClass + " !!!";
-                        textLG.setText(s);
-                    }
-                    else {
-                        addLog("WARNING: lastHailedDev is null \n");
-                    }
-                } else {
-                    addLog("WARNING: lastGreeted or mBTSrv is null \n");
-                }
                 addLog( "RECEIVED: new hail \n"  );
             }
 
