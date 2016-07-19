@@ -134,7 +134,10 @@ public class MyActivity extends AppCompatActivity {
         if ( textLG != null && mBTSrv != null) {
             if (mBTSrv.lastHailedDev != null) {
 
-                String s="!!! "+ R.string.text_last_hailed_deviced + " " + mBTSrv.lastHailedDev.name + " "+ mBTSrv.lastHailedDev.strMajorClass + " !!!";
+                String s="!!! "+ getString(R.string.text_last_hailed_device)
+                        + " " + ( (mBTSrv.lastHailedDev.name == null) ? getString(R.string.text_device_name_unknown) :mBTSrv.lastHailedDev.name)
+                        + " "+ mBTSrv.lastHailedDev.strMajorClass
+                        +" "+ formatTime(mBTSrv.lastHailedDev.time, "MM.dd HH:mm:ss") + " !!!";
                 textLG.setText(s);
             }
             else {
