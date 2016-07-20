@@ -45,7 +45,7 @@ public class BTscanService extends Service {
 
     private SensorManager mSensorManager;
     private Sensor mProximitySensor;
-
+    AudioManager mAudioManager;
 
     boolean mVolumeLow=false;
 
@@ -169,7 +169,7 @@ public class BTscanService extends Service {
         mDevLst = new ArrayList<>();
         mPrevDevLst = new ArrayList<>();
 
-
+        mAudioManager = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         mProximitySensor = mSensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
         mSensorManager.registerListener (mSensorReceiver, mProximitySensor, SensorManager.SENSOR_DELAY_NORMAL);
@@ -405,14 +405,56 @@ public class BTscanService extends Service {
         return s;
     }
 
+    private final AudioManager.OnAudioFocusChangeListener afChangeListener =
+            new AudioManager.OnAudioFocusChangeListener() {
+                public void onAudioFocusChange(int focusChange) {
+                    if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
+                        // Pause playback
+                    } else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
+                        // Resume playback
+                    } else if (focusChange == AudioManager.AUDIOFOCUS_LOSS) {
+                        // Stop playback
+                    }
+                }
+            };
+
+    int originalVolume;
+
     public void hailDev(BTDevice dev){
 
         lastHailedDev = dev;
         try {
         //playing sound
         if (mPlayerSound) {
+            if (!mVolumeLow) {
+                addLog("PLAY LOUD: LowrequestAudioFocus \n");
+                int result = mAudioManager.requestAudioFocus(afChangeListener,
+                // Use the music stream.
+                    AudioManager.STREAM_MUSIC,
+                            // Request permanent focus.
+                    AudioManager.AUDIOFOCUS_GAIN);
+                    if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+                        addLog("requestAudioFocus granted\n");
+                    } else {
+                        addLog("requestAudioFocus not granted\n");
+                    }
+                originalVolume = mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+                mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, mAudioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC), 0);
+            } else {
+                addLog("PLAY LOW VOLUME: \n");
+                originalVolume = mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+                mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 1, 0);
+            }
             MediaPlayer mediaPlayer = MediaPlayer.create(this.getApplicationContext(), R.raw.hello);
             mediaPlayer.setWakeMode(this.getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
+            mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener()
+            {
+                @Override
+                public void onCompletion(MediaPlayer mp)
+                {
+                    mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, originalVolume, 0);
+                }
+            });
             mediaPlayer.start(); // no need to call prepare(); create() does that for you
         } else {
             addLog("***Hailing sound turned off \n");
