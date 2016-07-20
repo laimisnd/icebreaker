@@ -12,6 +12,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Binder;
 import android.os.Handler;
@@ -37,6 +42,13 @@ public class BTscanService extends Service {
     public static final String NOTIFICATION_BTSCAN_FINISHED="laimis.BTscanService.NOTIFICATION_BTSCAN_FINISHED";
 
     int mStartMode=START_STICKY;       // indicates how to behave if the service is killed
+
+    private SensorManager mSensorManager;
+    private Sensor mProximitySensor;
+
+
+    boolean mVolumeLow=false;
+
     private final IBinder myBinder = new BTLocalBinder();
 
     private long mBTDiscoveryInterval = 30;//seconds
@@ -158,6 +170,10 @@ public class BTscanService extends Service {
         mPrevDevLst = new ArrayList<>();
 
 
+        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        mProximitySensor = mSensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
+        mSensorManager.registerListener (mSensorReceiver, mProximitySensor, SensorManager.SENSOR_DELAY_NORMAL);
+
         //BluetoothManager btm = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         //ba = btm.getAdapter();
 
@@ -245,6 +261,8 @@ public class BTscanService extends Service {
 
         // Unregister broadcast listeners
         this.unregisterReceiver(mReceiver);
+        mSensorManager.unregisterListener(mSensorReceiver);
+
         mDestroyed=true;
         super.onDestroy();
     }
@@ -474,15 +492,16 @@ public class BTscanService extends Service {
                         } else {
                             if ( System.currentTimeMillis() - dev.time < 1000 * mHailTimeoutSecs )
                                 addLog("Too soon to hail again\n");
-                            else
+                            else {
                                 addLog("***HAILING EXISTING***\n");
-                            addLog("dev last hail time:"+formatTime(dev.time, "yy/MM/dd HH:mm:s")+"\n");
-                            addLog("current time:"+formatTime(System.currentTimeMillis(), "yy/MM/dd HH:mm:s")+"\n");
-                            addLog("delta time between hails:"+Math.round((System.currentTimeMillis() - dev.time)/1000)+"\n");
-                            dev.time= System.currentTimeMillis();
-                            dev.hailCount++;
+                                addLog("dev last hail time:" + formatTime(dev.time, "yy/MM/dd HH:mm:s") + "\n");
+                                addLog("current time:" + formatTime(System.currentTimeMillis(), "yy/MM/dd HH:mm:s") + "\n");
+                                addLog("delta time between hails:" + Math.round((System.currentTimeMillis() - dev.time) / 1000) + "\n");
+                                dev.time = System.currentTimeMillis();
+                                dev.hailCount++;
 
-                            hailDev(dev);
+                                hailDev(dev);
+                            }
 
                         }
 
@@ -501,5 +520,27 @@ public class BTscanService extends Service {
             }
         }
     };
+
+
+
+        private final SensorEventListener mSensorReceiver = new SensorEventListener() {
+            public void onAccuracyChanged(Sensor sensor, int accuracy) {
+            }
+
+            public void onSensorChanged(SensorEvent event) {
+                addLog("distance " + String.valueOf(event.values[0]) + "\n");
+                addLog("MaximumRange " + String.valueOf(mProximitySensor.getMaximumRange()) + "\n");
+
+                if (event.values[0] < mProximitySensor.getMaximumRange()) {
+                    // Lower the volume
+                    mVolumeLow = true;
+                    addLog("mVolumeLow = true \n");
+                } else {
+                    // Raise it back to normal
+                    mVolumeLow = false;
+                    addLog("mVolumeLow = false \n");
+                }
+            }
+        };
 
 }

@@ -42,6 +42,7 @@ public class MyActivity extends AppCompatActivity {
     public final static int MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION = 123;
     public final static int MY_PERMISSIONS_BLUETOOTH = 124;
     public final static int MY_PERMISSIONS_WAKE_LOCK = 125;
+    public final static int MY_PERMISSIONS_MODIFY_AUDIO_SETTINGS= 126;
 
     private TextView log;
     private TextView devHist;
@@ -316,6 +317,22 @@ public class MyActivity extends AppCompatActivity {
 
             return;
         }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.MODIFY_AUDIO_SETTINGS) != PackageManager.PERMISSION_GRANTED
+                ) {
+            // Should we show an explanation?
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.MODIFY_AUDIO_SETTINGS},
+                    MY_PERMISSIONS_MODIFY_AUDIO_SETTINGS);
+
+            // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
+            // app-defined int constant. The callback method gets the
+            // result of the request.
+            message = message + "MODIFY_AUDIO_SETTINGS  permision is not granted damn you";
+            log.setText(message);
+
+            return;
+        }
+
 
         IntentFilter filter = new IntentFilter(BTscanService.NOTIFICATION_HAILED);
         this.registerReceiver(mReceiver, filter);
