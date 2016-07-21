@@ -47,7 +47,9 @@ public class BTscanService extends Service {
     private Sensor mProximitySensor;
     AudioManager mAudioManager;
 
-    boolean mVolumeLow=false;
+    //boolean mVolumeLow=false;
+
+    MediaPlayer mediaPlayer ;
 
     private final IBinder myBinder = new BTLocalBinder();
 
@@ -92,7 +94,7 @@ public class BTscanService extends Service {
 
     public void addLog(String msg) {
         mlog.add(msg);
-        if (mlog.size()>20) mlog.removeFirst();
+        if (mlog.size()>75) mlog.removeFirst();
     }
     public void clearLog(){
         //mlog.clear();
@@ -171,6 +173,9 @@ public class BTscanService extends Service {
 
         mAudioManager = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+
+        mediaPlayer = MediaPlayer.create(this.getApplicationContext(), R.raw.hello);
+
         mProximitySensor = mSensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
         mSensorManager.registerListener (mSensorReceiver, mProximitySensor, SensorManager.SENSOR_DELAY_NORMAL);
 
@@ -257,6 +262,11 @@ public class BTscanService extends Service {
 
         if ( ba != null) {
             ba.cancelDiscovery();
+        }
+
+        if (mediaPlayer!=null) {
+            mediaPlayer.release();
+            mediaPlayer = null;
         }
 
         // Unregister broadcast listeners
@@ -408,12 +418,23 @@ public class BTscanService extends Service {
     private final AudioManager.OnAudioFocusChangeListener afChangeListener =
             new AudioManager.OnAudioFocusChangeListener() {
                 public void onAudioFocusChange(int focusChange) {
-                    if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
-                        // Pause playback
-                    } else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
-                        // Resume playback
-                    } else if (focusChange == AudioManager.AUDIOFOCUS_LOSS) {
-                        // Stop playback
+                    addLog("VOLUME: audio focus received: "+focusChange+" \n");
+                    if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK
+                            || focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT
+                            || focusChange == AudioManager.AUDIOFOCUS_LOSS ) {
+                        // Lower the volume
+                        if (mediaPlayer!=null && mAudioManager!=null) {
+                            mediaPlayer.setVolume(1, 1);
+                            addLog("VOLUME: LOW volume\n");
+                        }
+                    } else if (focusChange == AudioManager.AUDIOFOCUS_GAIN
+                            || focusChange == AudioManager.AUDIOFOCUS_GAIN_TRANSIENT
+                            || focusChange == AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK ) {
+                        // Raise it back to normal
+                        if (mediaPlayer!=null && mAudioManager!=null) {
+                            mediaPlayer.setVolume(mAudioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC), mAudioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC));
+                            addLog("VOLUME: MAX volume\n");
+                        }
                     }
                 }
             };
@@ -424,38 +445,52 @@ public class BTscanService extends Service {
 
         lastHailedDev = dev;
         try {
+            originalVolume = mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
         //playing sound
         if (mPlayerSound) {
-            if (!mVolumeLow) {
+            /*if (!mVolumeLow) {
                 addLog("PLAY LOUD: LowrequestAudioFocus \n");
                 int result = mAudioManager.requestAudioFocus(afChangeListener,
                 // Use the music stream.
                     AudioManager.STREAM_MUSIC,
                             // Request permanent focus.
-                    AudioManager.AUDIOFOCUS_GAIN);
+                    AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
                     if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
                         addLog("requestAudioFocus granted\n");
                     } else {
                         addLog("requestAudioFocus not granted\n");
                     }
-                originalVolume = mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
-                mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, mAudioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC), 0);
+                //mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, mAudioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC), 0);
+                //addLog("VOLUME: set max volume \n");
             } else {
-                addLog("PLAY LOW VOLUME: \n");
-                originalVolume = mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
-                mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 1, 0);
+                //mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 1, 0);
+                //addLog("VOLUME: set min volume: \n");
+            }*/
+
+            addLog("VOLUME: RequestAudioFocus \n");
+            int result = mAudioManager.requestAudioFocus(afChangeListener,
+                    // Use the music stream.
+                    AudioManager.STREAM_MUSIC,
+                    // Request permanent focus.
+                    AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
+            if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+                addLog("VOLUME: requestAudioFocus granted\n");
+            } else {
+                addLog("VOLUME: requestAudioFocus not granted\n");
             }
-            MediaPlayer mediaPlayer = MediaPlayer.create(this.getApplicationContext(), R.raw.hello);
+
             mediaPlayer.setWakeMode(this.getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
-            mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener()
+            /*mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener()
             {
                 @Override
                 public void onCompletion(MediaPlayer mp)
                 {
-                    mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, originalVolume, 0);
+                    //mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, originalVolume, 0);
+                   // addLog("VOLUME: reset back to original\n");
                 }
-            });
+            });*/
             mediaPlayer.start(); // no need to call prepare(); create() does that for you
+
         } else {
             addLog("***Hailing sound turned off \n");
         }
@@ -572,7 +607,7 @@ public class BTscanService extends Service {
             public void onSensorChanged(SensorEvent event) {
                 addLog("distance " + String.valueOf(event.values[0]) + "\n");
                 addLog("MaximumRange " + String.valueOf(mProximitySensor.getMaximumRange()) + "\n");
-
+                /*
                 if (event.values[0] < mProximitySensor.getMaximumRange()) {
                     // Lower the volume
                     mVolumeLow = true;
@@ -582,6 +617,7 @@ public class BTscanService extends Service {
                     mVolumeLow = false;
                     addLog("mVolumeLow = false \n");
                 }
+                */
             }
         };
 
