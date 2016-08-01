@@ -131,6 +131,14 @@
         android:text="@string/button_pick_audio"
         android:onClick="btPickContact" />
 
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Hail audio"
+        android:id="@+id/hailAudio"
+        android:layout_weight="0.06" />
+
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

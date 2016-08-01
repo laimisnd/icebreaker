@@ -12,6 +12,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.provider.MediaStore;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -50,6 +51,7 @@ public class MyActivity extends AppCompatActivity {
     private TextView log;
     private TextView devHist;
     private EditText hailTimeout;
+    private TextView HailAudio;
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
      * See https://g.co/AppIndexing/AndroidStudio for more information.
@@ -211,6 +213,9 @@ public class MyActivity extends AppCompatActivity {
             swSrv.setChecked(mBTSrv.mDiscoveryStarted);
             addLog("mDiscoveryStarted: "+mBTSrv.mDiscoveryStarted);
         }
+
+        HailAudio.setText(getDisplayName(mBTSrv.getAudioUri()));
+
         displayLastHailed();
     }
 
@@ -255,6 +260,8 @@ public class MyActivity extends AppCompatActivity {
         devHist = (TextView) findViewById(R.id.devhist);
 
         hailTimeout= (EditText) findViewById(R.id.hailTimeout);
+
+        HailAudio = (TextView) findViewById(R.id.hailAudio);
 
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_ADMIN) != PackageManager.PERMISSION_GRANTED
@@ -668,8 +675,10 @@ stopService(btSrv);
             if (requestCode == PICK_AUDIO_REQUEST) {
                 Uri selectedAudioUri = data.getData();
                 if (selectedAudioUri != null )
-                    if ( mBTSrv != null )
-                        mBTSrv.setAudioUri(selectedAudioUri );
+                    if ( mBTSrv != null ) {
+                        mBTSrv.setAudioUri(selectedAudioUri);
+                        HailAudio.setText(getDisplayName(selectedAudioUri));
+                    }
                     else
                         addLog("ERROR: can't set Audio URI, damned service is null");
                 else
@@ -698,21 +707,18 @@ stopService(btSrv);
         }
     }
 
-    /*
-    public String getPath(Uri uri) {
-        String[] projection = { MediaStore.Images.Media.DATA };
-        Cursor cursor = getContentResolver(uri, projection, null, null, null);
-        if(cursor!=null)
+
+    public String getDisplayName(Uri uri) {
+        if (uri == null) return "";
+        String[] projection = { MediaStore.Audio.Media.DISPLAY_NAME };
+        Cursor cursor = this.getContentResolver().query(uri, projection, null, null, null);
+        if(cursor!=null  && cursor.moveToFirst() )
         {
-            //HERE YOU WILL GET A NULLPOINTER IF CURSOR IS NULL
-            //THIS CAN BE, IF YOU USED OI FILE MANAGER FOR PICKING THE MEDIA
-            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-            cursor.moveToFirst();
-            return cursor.getString(column_index);
+            return cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DISPLAY_NAME));
         }
-        else return null;
+        else return "";
     }
-    */
+
 
     public void btExit(View view) {
         StopService();

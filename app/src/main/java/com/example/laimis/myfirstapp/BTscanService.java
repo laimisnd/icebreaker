@@ -128,6 +128,7 @@ public class BTscanService extends Service {
             addLog(exceptionAsString);
         }
     }
+    public Uri getAudioUri() { return mAudioUri;}
 
     public long getBTDiscoveryInterval(){ return mBTDiscoveryInterval;}
 
