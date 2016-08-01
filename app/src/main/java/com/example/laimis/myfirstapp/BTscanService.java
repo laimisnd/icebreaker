@@ -11,6 +11,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -29,6 +30,7 @@ import android.support.v4.content.ContextCompat;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -38,6 +40,8 @@ import java.util.Locale;
 import java.util.Map;
 
 public class BTscanService extends Service {
+
+    private static final boolean DYNLOG=false;
 
     public static int NOTIFICATION_ID_FOREGROUND_SERVICE=123;
     public static final String NOTIFICATION_HAILED="laimis.BTscanService.HAILED";
@@ -90,11 +94,15 @@ public class BTscanService extends Service {
     BTDevice lastHailedDev;
 
     private int mHailedDevsSize = 100;
-    public  long  mHailTimeoutSecs=3600*12;
+    private long  mHailTimeoutSecs=3600*12;
 
     public  boolean mPlayerSound = true;
 
     private Uri mAudioUri;
+
+    public void addLogDYN(String msg) {
+        if (DYNLOG) addLog(msg);
+    }
 
     public void addLog(String msg) {
         mlog.add(msg);
@@ -116,6 +124,9 @@ public class BTscanService extends Service {
     {
         try {
             mAudioUri = audio;
+            editor.putString("mAudioUri", mAudioUri.toString());
+            editor.commit();
+
             if (mediaPlayer != null && mAudioUri != null) {
                 mediaPlayer.reset();
                 mediaPlayer.setDataSource(this.getApplicationContext(), mAudioUri);
@@ -130,11 +141,22 @@ public class BTscanService extends Service {
     }
     public Uri getAudioUri() { return mAudioUri;}
 
+    public long getHailTimeoutSecs(){ return mHailTimeoutSecs;}
+
+    public void setHailTimeoutSecs(long pHailTimeoutSecs) {
+        mHailTimeoutSecs=pHailTimeoutSecs;
+        editor.putLong("mHailTimeoutSecs", mHailTimeoutSecs);
+        editor.commit();
+    }
+
     public long getBTDiscoveryInterval(){ return mBTDiscoveryInterval;}
 
     public void setBTDiscoveryInterval(long pBTDiscoveryInterval) {
 
         mBTDiscoveryInterval=pBTDiscoveryInterval;
+        editor.putLong("mBTDiscoveryInterval", mBTDiscoveryInterval);
+        editor.commit();
+
         if (!mDestroyed && mDiscoveryStarted) {
             //timerHandler.removeCallbacks(timerRunnable);
             //timerHandler.postDelayed(timerRunnable, 0);
@@ -178,8 +200,33 @@ public class BTscanService extends Service {
         }
     }
 
+    private SharedPreferences sharedPref ;
+    private SharedPreferences.Editor editor ;
+
     @Override
     public void onCreate() {
+
+        sharedPref = getSharedPreferences("srv", Context.MODE_PRIVATE);
+        editor = sharedPref.edit();
+
+        //load saved stuff:
+        //mHailTimeoutSecs
+        mHailTimeoutSecs=sharedPref.getLong("mHailTimeoutSecs", mHailTimeoutSecs);
+        //mBTDiscoveryInterval
+        mBTDiscoveryInterval=sharedPref.getLong("mBTDiscoveryInterval", mBTDiscoveryInterval);
+        //mAudioUri
+        String mAudioUriStr=sharedPref.getString("mAudioUri", "");
+        mAudioUri=null;
+        try {
+            if (!mAudioUriStr.equals(""))
+                mAudioUri = Uri.parse(mAudioUriStr);
+        } catch (Exception e) {
+            addLog("ERROR: parsing  mAudioUri:"+mAudioUriStr);
+            StringWriter sw = new StringWriter();
+            e.printStackTrace(new PrintWriter(sw));
+            String exceptionAsString = sw.toString();
+            addLog(exceptionAsString);
+        }
 
         mlog=new LinkedList<>() ;
         // The service is being created
@@ -196,9 +243,20 @@ public class BTscanService extends Service {
         mAudioManager = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 
-        if (mAudioUri != null)
+        mediaPlayer=null;
+        if (mAudioUri != null) {
+            try {
                 mediaPlayer = MediaPlayer.create(this.getApplicationContext(), mAudioUri);
-            else
+            } catch (Exception e) {
+                addLog("ERROR: MediaPlayer creating from uri");
+                StringWriter sw = new StringWriter();
+                e.printStackTrace(new PrintWriter(sw));
+                String exceptionAsString = sw.toString();
+                addLog(exceptionAsString);
+            }
+        }
+
+        if (mediaPlayer==null)
                 mediaPlayer = MediaPlayer.create(this.getApplicationContext(), R.raw.hello);
 
         mProximitySensor = mSensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
@@ -375,7 +433,7 @@ public class BTscanService extends Service {
         minutes = minutes  % 60;*/
 
             //addLog(String.format("#%d %d:%02d:%02d ", mCnt, hh, minutes, seconds));
-            addLog(String.format(Locale.US, "#%d ", mCnt) + formatTime(System.currentTimeMillis(),"yy/MM/dd HH:mm:ss")  );
+            addLogDYN(String.format(Locale.US, "#%d ", mCnt) + formatTime(System.currentTimeMillis(),"yy/MM/dd HH:mm:ss")  );
 
             if ( ba == null ) {
                 addLog("ERROR: Bluetooth adapter is null. Try starting the service again");
@@ -383,15 +441,15 @@ public class BTscanService extends Service {
             }
 
             if (ba.isDiscovering()) {
-                addLog("BT discovery in progress...");
+                addLogDYN("BT discovery in progress...");
             } else {
 
 
 
                 clearLog();
-                addLog(String.format(Locale.US, "#%d ", mCnt) + formatTime(System.currentTimeMillis(),"yy/MM/dd HH:mm:ss")   );
-                addLog("History size:"+mHailedDevs.size() );
-                addLog("BT discovery started, prev list size: "+mPrevDevLst.size());
+                addLogDYN(String.format(Locale.US, "#%d ", mCnt) + formatTime(System.currentTimeMillis(),"yy/MM/dd HH:mm:ss")   );
+                addLogDYN("History size:"+mHailedDevs.size() );
+                addLogDYN("BT discovery started, prev list size: "+mPrevDevLst.size());
 
 
                 mDevLst.clear();
@@ -537,7 +595,7 @@ public class BTscanService extends Service {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            addLog( "Received action: " + action + ":");
+            addLogDYN( "Received action: " + action + ":");
             // When discovery finds a device
             if (BluetoothDevice.ACTION_FOUND.equals(action)) {
                 // Get the BluetoothDevice object from the Intent
@@ -545,10 +603,10 @@ public class BTscanService extends Service {
                 // If it's already paired, skip it, because it's been listed already
                 if (device.getBondState() != BluetoothDevice.BOND_BONDED) {
 
-                    addLog( "Found BDevice: " + device.getName() + " : " +  device.getAddress() + "  class:" + device.getBluetoothClass().getMajorDeviceClass() );
+                    addLogDYN( "Found BDevice: " + device.getName() + " : " +  device.getAddress() + "  class:" + device.getBluetoothClass().getMajorDeviceClass() );
 
                     if ( device.getBluetoothClass() == null) {
-                        addLog( "Class is null, skipping" );
+                        addLogDYN( "Class is null, skipping" );
                         return;
                     }
                     if ( ! device.getBluetoothClass().hasService(BluetoothClass.Service.TELEPHONY)
@@ -556,16 +614,16 @@ public class BTscanService extends Service {
                             && device.getBluetoothClass().getMajorDeviceClass() != BluetoothClass.Device.Major.PHONE
                             && device.getBluetoothClass().getMajorDeviceClass() != BluetoothClass.Device.Major.WEARABLE
                             ) {
-                        addLog( "Not human BT device, skipping" );
+                        addLogDYN( "Not human BT device, skipping" );
                         return;
                     }
 
                     mDevLst.add(device.getAddress());
-                    addLog( " found dev list size:" + mDevLst.size());
+                    addLogDYN( " found dev list size:" + mDevLst.size());
 
                     //chgeck if new:
                     if ( mPrevDevLst.contains(device.getAddress()) ) {
-                        addLog( " existing  device" );
+                        addLogDYN( " existing  device" );
                         //update device name if not null: sometimes name comes later on
                         BTDevice dev=mHailedDevs.get(device.getAddress());
                         if (dev !=null)
@@ -615,7 +673,7 @@ public class BTscanService extends Service {
                 mPrevDevLst=mDevLst;
                 mDevLst = new ArrayList<>();
 
-                addLog( "Finished discovery: found "+ mPrevDevLst.size() +" devices"  );
+                addLogDYN( "Finished discovery: found "+ mPrevDevLst.size() +" devices"  );
                 Intent rint = new Intent(NOTIFICATION_BTSCAN_FINISHED);
                 sendBroadcast (rint);
 

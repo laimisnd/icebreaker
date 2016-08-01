@@ -45,6 +45,7 @@ public class MyActivity extends AppCompatActivity {
     public final static int MY_PERMISSIONS_BLUETOOTH = 124;
     public final static int MY_PERMISSIONS_WAKE_LOCK = 125;
     public final static int MY_PERMISSIONS_MODIFY_AUDIO_SETTINGS= 126;
+    public final static int MY_PERMISSIONS_READ_EXTERNAL_STORAGE = 127;
 
     static final int PICK_AUDIO_REQUEST = 1;  // The request code
 
@@ -163,7 +164,7 @@ public class MyActivity extends AppCompatActivity {
 
         addLog("srv timer ticker:" + mBTSrv.mCnt);
 
-        addLog("srv mHailTimeoutSecs:" + mBTSrv.mHailTimeoutSecs);
+        addLog("srv mHailTimeoutSecs:" + mBTSrv.getHailTimeoutSecs());
         addLog("srv Timer Interval:" + mBTSrv.getBTDiscoveryInterval());
         addLog("srv destroyed:" + mBTSrv.mDestroyed);
 
@@ -195,7 +196,7 @@ public class MyActivity extends AppCompatActivity {
         //mHailTimeoutSecs = savedInstanceState.getLong("mHailTimeoutSecs");
 
         //editText.setText(Long.toString(mBTSrv.mHailTimeoutSecs));
-        hailTimeout.setText(String.valueOf(mBTSrv.mHailTimeoutSecs));
+        hailTimeout.setText(String.valueOf(mBTSrv.getHailTimeoutSecs()));
 
         EditText btdev_dtime = (EditText) findViewById(R.id.btdev_discovery_timeout);
         if ( btdev_dtime != null ) {
@@ -342,6 +343,24 @@ public class MyActivity extends AppCompatActivity {
 
             return;
         }
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
+                ) {
+            // Should we show an explanation?
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                    MY_PERMISSIONS_READ_EXTERNAL_STORAGE);
+
+            // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
+            // app-defined int constant. The callback method gets the
+            // result of the request.
+            message = message + "READ_EXTERNAL_STORAGE  permision is not granted damn you";
+            log.setText(message);
+
+            return;
+        }
+
+
 
 
         IntentFilter filter = new IntentFilter(BTscanService.NOTIFICATION_HAILED);
@@ -709,14 +728,14 @@ stopService(btSrv);
 
 
     public String getDisplayName(Uri uri) {
-        if (uri == null) return "";
+        if (uri == null) return "Null uri";
         String[] projection = { MediaStore.Audio.Media.DISPLAY_NAME };
         Cursor cursor = this.getContentResolver().query(uri, projection, null, null, null);
-        if(cursor!=null  && cursor.moveToFirst() )
-        {
+        if(cursor!=null)
+        if (cursor.moveToFirst() )        {
             return cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DISPLAY_NAME));
-        }
-        else return "";
+        } else return "Unknown move";
+        else return "Unknown cursor";
     }
 
 
@@ -740,7 +759,7 @@ stopService(btSrv);
         }
 
         try {
-            mBTSrv.mHailTimeoutSecs = Long.parseLong(hailTimeout.getText().toString());
+            mBTSrv.setHailTimeoutSecs(Long.parseLong(hailTimeout.getText().toString()));
         } catch (NumberFormatException ex){
             addLog("ERROR: hailTimeout EditText is not a number" );
         }
