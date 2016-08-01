@@ -3,6 +3,8 @@
     <string name="edit_message">Enter a message</string>
     <string name="button_send">Send</string>
     <string name="button_exit">Exit</string>
+    <string name="button_pick_audio">Select hail</string>
+
     <string name="action_settings">Settings</string>
     <string name="action_stop">Stop service</string>
     <string name="action_start">Start service</string>
@@ -24,4 +26,6 @@
 
     <string name="text_last_hailed_device">The last Hi went to</string>
     <string name="text_device_name_unknown">Incognito</string>
+
+    <string name="chooser_pick_audio">Select audio file</string>
 </resources>

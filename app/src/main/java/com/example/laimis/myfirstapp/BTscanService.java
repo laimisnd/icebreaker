@@ -18,6 +18,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
@@ -25,6 +26,7 @@ import android.os.PowerManager;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.text.SimpleDateFormat;
@@ -92,6 +94,8 @@ public class BTscanService extends Service {
 
     public  boolean mPlayerSound = true;
 
+    private Uri mAudioUri;
+
     public void addLog(String msg) {
         mlog.add(msg);
         if (mlog.size()>75) mlog.removeFirst();
@@ -106,6 +110,23 @@ public class BTscanService extends Service {
     }
 
     public BTscanService() {
+    }
+
+    public void setAudioUri(Uri audio)
+    {
+        try {
+            mAudioUri = audio;
+            if (mediaPlayer != null && mAudioUri != null) {
+                mediaPlayer.reset();
+                mediaPlayer.setDataSource(this.getApplicationContext(), mAudioUri);
+                addLog("AUDIO: set audio source to " + mAudioUri.toString());
+            }
+        } catch (Exception e ) {
+            StringWriter sw = new StringWriter();
+            e.printStackTrace(new PrintWriter(sw));
+            String exceptionAsString = sw.toString();
+            addLog(exceptionAsString);
+        }
     }
 
     public long getBTDiscoveryInterval(){ return mBTDiscoveryInterval;}
@@ -174,7 +195,10 @@ public class BTscanService extends Service {
         mAudioManager = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 
-        mediaPlayer = MediaPlayer.create(this.getApplicationContext(), R.raw.hello);
+        if (mAudioUri != null)
+                mediaPlayer = MediaPlayer.create(this.getApplicationContext(), mAudioUri);
+            else
+                mediaPlayer = MediaPlayer.create(this.getApplicationContext(), R.raw.hello);
 
         mProximitySensor = mSensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
         mSensorManager.registerListener (mSensorReceiver, mProximitySensor, SensorManager.SENSOR_DELAY_NORMAL);
@@ -183,8 +207,8 @@ public class BTscanService extends Service {
         //ba = btm.getAdapter();
 
 
-        addLog("Service Created\n");
-        addLog("mPrevDevLst size: " +mPrevDevLst.size()+ "\n");
+        addLog("Service Created");
+        addLog("mPrevDevLst size: " +mPrevDevLst.size());
 
 
 
@@ -350,7 +374,7 @@ public class BTscanService extends Service {
         minutes = minutes  % 60;*/
 
             //addLog(String.format("#%d %d:%02d:%02d ", mCnt, hh, minutes, seconds));
-            addLog(String.format(Locale.US, "#%d ", mCnt) + formatTime(System.currentTimeMillis(),"yy/MM/dd HH:mm:ss") +"\n" );
+            addLog(String.format(Locale.US, "#%d ", mCnt) + formatTime(System.currentTimeMillis(),"yy/MM/dd HH:mm:ss")  );
 
             if ( ba == null ) {
                 addLog("ERROR: Bluetooth adapter is null. Try starting the service again");
@@ -358,15 +382,15 @@ public class BTscanService extends Service {
             }
 
             if (ba.isDiscovering()) {
-                addLog("BT discovery in progress...\n");
+                addLog("BT discovery in progress...");
             } else {
 
 
 
                 clearLog();
-                addLog(String.format(Locale.US, "#%d ", mCnt) + formatTime(System.currentTimeMillis(),"yy/MM/dd HH:mm:ss") +"\n"  );
-                addLog("History size:"+mHailedDevs.size() +"\n");
-                addLog("BT discovery started, prev list size: "+mPrevDevLst.size()+" \n");
+                addLog(String.format(Locale.US, "#%d ", mCnt) + formatTime(System.currentTimeMillis(),"yy/MM/dd HH:mm:ss")   );
+                addLog("History size:"+mHailedDevs.size() );
+                addLog("BT discovery started, prev list size: "+mPrevDevLst.size());
 
 
                 mDevLst.clear();
@@ -418,14 +442,14 @@ public class BTscanService extends Service {
     private final AudioManager.OnAudioFocusChangeListener afChangeListener =
             new AudioManager.OnAudioFocusChangeListener() {
                 public void onAudioFocusChange(int focusChange) {
-                    addLog("VOLUME: audio focus received: "+focusChange+" \n");
+                    addLog("VOLUME: audio focus received: "+focusChange);
                     if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK
                             || focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT
                             || focusChange == AudioManager.AUDIOFOCUS_LOSS ) {
                         // Lower the volume
                         if (mediaPlayer!=null && mAudioManager!=null) {
                             mediaPlayer.setVolume(1, 1);
-                            addLog("VOLUME: LOW volume\n");
+                            addLog("VOLUME: LOW volume");
                         }
                     } else if (focusChange == AudioManager.AUDIOFOCUS_GAIN
                             || focusChange == AudioManager.AUDIOFOCUS_GAIN_TRANSIENT
@@ -433,7 +457,7 @@ public class BTscanService extends Service {
                         // Raise it back to normal
                         if (mediaPlayer!=null && mAudioManager!=null) {
                             mediaPlayer.setVolume(mAudioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC), mAudioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC));
-                            addLog("VOLUME: MAX volume\n");
+                            addLog("VOLUME: MAX volume");
                         }
                     }
                 }
@@ -449,34 +473,34 @@ public class BTscanService extends Service {
         //playing sound
         if (mPlayerSound) {
             /*if (!mVolumeLow) {
-                addLog("PLAY LOUD: LowrequestAudioFocus \n");
+                addLog("PLAY LOUD: LowrequestAudioFocus ");
                 int result = mAudioManager.requestAudioFocus(afChangeListener,
                 // Use the music stream.
                     AudioManager.STREAM_MUSIC,
                             // Request permanent focus.
                     AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
                     if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
-                        addLog("requestAudioFocus granted\n");
+                        addLog("requestAudioFocus granted");
                     } else {
-                        addLog("requestAudioFocus not granted\n");
+                        addLog("requestAudioFocus not granted");
                     }
                 //mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, mAudioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC), 0);
-                //addLog("VOLUME: set max volume \n");
+                //addLog("VOLUME: set max volume ");
             } else {
                 //mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 1, 0);
-                //addLog("VOLUME: set min volume: \n");
+                //addLog("VOLUME: set min volume: ");
             }*/
 
-            addLog("VOLUME: RequestAudioFocus \n");
+            addLog("VOLUME: RequestAudioFocus");
             int result = mAudioManager.requestAudioFocus(afChangeListener,
                     // Use the music stream.
                     AudioManager.STREAM_MUSIC,
                     // Request permanent focus.
                     AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
             if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
-                addLog("VOLUME: requestAudioFocus granted\n");
+                addLog("VOLUME: requestAudioFocus granted");
             } else {
-                addLog("VOLUME: requestAudioFocus not granted\n");
+                addLog("VOLUME: requestAudioFocus not granted");
             }
 
             mediaPlayer.setWakeMode(this.getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
@@ -486,13 +510,13 @@ public class BTscanService extends Service {
                 public void onCompletion(MediaPlayer mp)
                 {
                     //mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, originalVolume, 0);
-                   // addLog("VOLUME: reset back to original\n");
+                   // addLog("VOLUME: reset back to original");
                 }
             });*/
             mediaPlayer.start(); // no need to call prepare(); create() does that for you
 
         } else {
-            addLog("***Hailing sound turned off \n");
+            addLog("***Hailing sound turned off");
         }
 
         //sending hail to main window
@@ -512,7 +536,7 @@ public class BTscanService extends Service {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            addLog( "Received action: " + action + ":\n");
+            addLog( "Received action: " + action + ":");
             // When discovery finds a device
             if (BluetoothDevice.ACTION_FOUND.equals(action)) {
                 // Get the BluetoothDevice object from the Intent
@@ -520,10 +544,10 @@ public class BTscanService extends Service {
                 // If it's already paired, skip it, because it's been listed already
                 if (device.getBondState() != BluetoothDevice.BOND_BONDED) {
 
-                    addLog( "Found BDevice: " + device.getName() + " : " +  device.getAddress() + "  class:" + device.getBluetoothClass().getMajorDeviceClass() + "\n" );
+                    addLog( "Found BDevice: " + device.getName() + " : " +  device.getAddress() + "  class:" + device.getBluetoothClass().getMajorDeviceClass() );
 
                     if ( device.getBluetoothClass() == null) {
-                        addLog( "Class is null, skipping \n" );
+                        addLog( "Class is null, skipping" );
                         return;
                     }
                     if ( ! device.getBluetoothClass().hasService(BluetoothClass.Service.TELEPHONY)
@@ -531,7 +555,7 @@ public class BTscanService extends Service {
                             && device.getBluetoothClass().getMajorDeviceClass() != BluetoothClass.Device.Major.PHONE
                             && device.getBluetoothClass().getMajorDeviceClass() != BluetoothClass.Device.Major.WEARABLE
                             ) {
-                        addLog( "Not human BT device, skipping \n" );
+                        addLog( "Not human BT device, skipping" );
                         return;
                     }
 
@@ -540,20 +564,20 @@ public class BTscanService extends Service {
 
                     //chgeck if new:
                     if ( mPrevDevLst.contains(device.getAddress()) ) {
-                        addLog( " existing  device\n" );
+                        addLog( " existing  device" );
                         //update device name if not null: sometimes name comes later on
                         BTDevice dev=mHailedDevs.get(device.getAddress());
                         if (dev !=null)
                             dev.name=device.getName();
 
                     } else {
-                        addLog( " *** Found new device ***\n" );
+                        addLog( " *** Found new device ***" );
 
                         BTDevice dev=mHailedDevs.get(device.getAddress());
                         if ( dev == null ) {
 
-                            addLog("New device in the list\n");
-                            addLog("***HAILING NEW***\n");
+                            addLog("New device in the list");
+                            addLog("***HAILING NEW***");
 
                             Long st=System.currentTimeMillis();
                             BTDevice ndev=new BTDevice(device.getName(),
@@ -568,12 +592,12 @@ public class BTscanService extends Service {
 
                         } else {
                             if ( System.currentTimeMillis() - dev.time < 1000 * mHailTimeoutSecs )
-                                addLog("Too soon to hail again\n");
+                                addLog("Too soon to hail again");
                             else {
-                                addLog("***HAILING EXISTING***\n");
-                                addLog("dev last hail time:" + formatTime(dev.time, "yy/MM/dd HH:mm:s") + "\n");
-                                addLog("current time:" + formatTime(System.currentTimeMillis(), "yy/MM/dd HH:mm:s") + "\n");
-                                addLog("delta time between hails:" + Math.round((System.currentTimeMillis() - dev.time) / 1000) + "\n");
+                                addLog("***HAILING EXISTING***");
+                                addLog("dev last hail time:" + formatTime(dev.time, "yy/MM/dd HH:mm:s") );
+                                addLog("current time:" + formatTime(System.currentTimeMillis(), "yy/MM/dd HH:mm:s") );
+                                addLog("delta time between hails:" + Math.round((System.currentTimeMillis() - dev.time) / 1000) );
                                 dev.time = System.currentTimeMillis();
                                 dev.hailCount++;
 
@@ -590,7 +614,7 @@ public class BTscanService extends Service {
                 mPrevDevLst=mDevLst;
                 mDevLst = new ArrayList<>();
 
-                addLog( "Finished discovery: found "+ mPrevDevLst.size() +" devices\n"  );
+                addLog( "Finished discovery: found "+ mPrevDevLst.size() +" devices"  );
                 Intent rint = new Intent(NOTIFICATION_BTSCAN_FINISHED);
                 sendBroadcast (rint);
 
@@ -605,17 +629,17 @@ public class BTscanService extends Service {
             }
 
             public void onSensorChanged(SensorEvent event) {
-                addLog("distance " + String.valueOf(event.values[0]) + "\n");
-                addLog("MaximumRange " + String.valueOf(mProximitySensor.getMaximumRange()) + "\n");
+                addLog("distance " + String.valueOf(event.values[0]) );
+                addLog("MaximumRange " + String.valueOf(mProximitySensor.getMaximumRange()) );
                 /*
                 if (event.values[0] < mProximitySensor.getMaximumRange()) {
                     // Lower the volume
                     mVolumeLow = true;
-                    addLog("mVolumeLow = true \n");
+                    addLog("mVolumeLow = true ");
                 } else {
                     // Raise it back to normal
                     mVolumeLow = false;
-                    addLog("mVolumeLow = false \n");
+                    addLog("mVolumeLow = false ");
                 }
                 */
             }

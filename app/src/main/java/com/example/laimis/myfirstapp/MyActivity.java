@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -43,6 +44,8 @@ public class MyActivity extends AppCompatActivity {
     public final static int MY_PERMISSIONS_BLUETOOTH = 124;
     public final static int MY_PERMISSIONS_WAKE_LOCK = 125;
     public final static int MY_PERMISSIONS_MODIFY_AUDIO_SETTINGS= 126;
+
+    static final int PICK_AUDIO_REQUEST = 1;  // The request code
 
     private TextView log;
     private TextView devHist;
@@ -142,10 +145,10 @@ public class MyActivity extends AppCompatActivity {
                 textLG.setText(s);
             }
             else {
-                addLog("WARNING: lastHailedDev is null \n");
+                addLog("WARNING: lastHailedDev is null");
             }
         } else {
-            addLog("WARNING: lastGreeted or mBTSrv is null \n");
+            addLog("WARNING: lastGreeted or mBTSrv is null");
         }
 
     }
@@ -154,13 +157,13 @@ public class MyActivity extends AppCompatActivity {
 
         if (mBTSrv == null) return;
 
-        addLog("srv name:" + mBTSrv.getClass().getName() + "\n");
+        addLog("srv name:" + mBTSrv.getClass().getName());
 
-        addLog("srv timer ticker:" + mBTSrv.mCnt + "\n");
+        addLog("srv timer ticker:" + mBTSrv.mCnt);
 
-        addLog("srv mHailTimeoutSecs:" + mBTSrv.mHailTimeoutSecs + "\n");
-        addLog("srv Timer Interval:" + mBTSrv.getBTDiscoveryInterval() + "\n");
-        addLog("srv destroyed:" + mBTSrv.mDestroyed + "\n");
+        addLog("srv mHailTimeoutSecs:" + mBTSrv.mHailTimeoutSecs);
+        addLog("srv Timer Interval:" + mBTSrv.getBTDiscoveryInterval());
+        addLog("srv destroyed:" + mBTSrv.mDestroyed);
 
         Iterator<String> it = mBTSrv.mlog.iterator();
         int ii = 0;
@@ -176,12 +179,12 @@ public class MyActivity extends AppCompatActivity {
         while (itt.hasNext()) {
             ii++;
             dv = itt.next().getValue();
-            //addDevHist(dv.name + "/" + dv.address + "/"+ (Long)(dv.time/1000) + "\n");
+            //addDevHist(dv.name + "/" + dv.address + "/"+ (Long)(dv.time/1000) );
             addDevHist(dv);
         }
         addDevHist("Restored List size:" + ii);
 //------------------------------------
-        addLog("History size:" + mBTSrv.mHailedDevs.size() + "\n");
+        addLog("History size:" + mBTSrv.mHailedDevs.size() );
 
         /*Iterator<String> itd = mHailedDevLst.iterator();
         while (itd.hasNext()) {
@@ -206,7 +209,7 @@ public class MyActivity extends AppCompatActivity {
         if (swSrv != null ) {
             //swSrv.setChecked(isBound );
             swSrv.setChecked(mBTSrv.mDiscoveryStarted);
-            addLog("mDiscoveryStarted: "+mBTSrv.mDiscoveryStarted+"\n");
+            addLog("mDiscoveryStarted: "+mBTSrv.mDiscoveryStarted);
         }
         displayLastHailed();
     }
@@ -370,7 +373,7 @@ public class MyActivity extends AppCompatActivity {
                 public void onCheckedChanged(CompoundButton cb, boolean on) {
                     if (mBTSrv == null) return;
                     if (on) mBTSrv.startBTDiscovery(); else mBTSrv.stopBTDiscovery();
-                    addLog("discovery button:  " + on + " srv field:"+mBTSrv.mDiscoveryStarted+"\n");
+                    addLog("discovery button:  " + on + " srv field:"+mBTSrv.mDiscoveryStarted);
                     //if (on) StartService(); else StopService();
                 }
             });
@@ -606,19 +609,19 @@ stopService(btSrv);
 
 
         //addLog(String.format("#%d %d:%02d:%02d ", mCnt, hh, minutes, seconds));
-        addLog(String.format("#%d ", mCnt) + formatTime(System.currentTimeMillis(),"yy/MM/dd HH:mm:ss") +"\n" );
+        addLog(String.format("#%d ", mCnt) + formatTime(System.currentTimeMillis(),"yy/MM/dd HH:mm:ss")  );
 
 
         if (ba.isDiscovering()) {
-            addLog("BT discovery in progress...\n");
+            addLog("BT discovery in progress...");
         } else {
 
 
 
             clearLog();
-            addLog(String.format("#%d ", mCnt) + formatTime(System.currentTimeMillis(),"yy/MM/dd HH:mm:ss") +"\n"  );
-            addLog("History size:"+mHailedDevs.size() +"\n");
-            addLog("BT discovery started, prev list size: "+mPrevDevLst.size()+" \n");
+            addLog(String.format("#%d ", mCnt) + formatTime(System.currentTimeMillis(),"yy/MM/dd HH:mm:ss")   );
+            addLog("History size:"+mHailedDevs.size() );
+            addLog("BT discovery started, prev list size: "+mPrevDevLst.size());
 
 
             mDevLst.clear();
@@ -651,6 +654,66 @@ stopService(btSrv);
     }
     */
 
+    public void btPickContact(View view) {
+        Intent pickAudioIntent = new Intent(Intent.ACTION_GET_CONTENT);
+        pickAudioIntent.setType("audio/*"); // Show user only contacts w/ phone numbers
+        startActivityForResult(Intent.createChooser(pickAudioIntent, getString(R.string.chooser_pick_audio) ), PICK_AUDIO_REQUEST);
+    }
+
+    private String selectedAudioPath;
+    private String filemanagerstring;
+
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (resultCode == RESULT_OK) {
+            if (requestCode == PICK_AUDIO_REQUEST) {
+                Uri selectedAudioUri = data.getData();
+                if (selectedAudioUri != null )
+                    if ( mBTSrv != null )
+                        mBTSrv.setAudioUri(selectedAudioUri );
+                    else
+                        addLog("ERROR: can't set Audio URI, damned service is null");
+                else
+                    addLog("ERROR: can't set Audio URI, damned URI is null");
+                /*
+                //OI FILE Manager
+                filemanagerstring = selectedAudioUri.getPath();
+
+                //MEDIA GALLERY
+                selectedAudioPath = getPath(selectedAudioUri);
+
+                //DEBUG PURPOSE - you can delete this if you want
+                if(selectedAudioPath!=null)
+                    addLog(selectedAudioPath);
+                else addLog("selectedAudioPath is null");
+                if(filemanagerstring!=null)
+                    addLog(filemanagerstring);
+                else addLog("filemanagerstring is null");
+
+                //NOW WE HAVE OUR WANTED STRING
+                if(selectedAudioPath!=null)
+                    addLog("selectedAudioPath is the right one for you!");
+                else
+                    addLog("filemanagerstring is the right one for you!");*/
+            }
+        }
+    }
+
+    /*
+    public String getPath(Uri uri) {
+        String[] projection = { MediaStore.Images.Media.DATA };
+        Cursor cursor = getContentResolver(uri, projection, null, null, null);
+        if(cursor!=null)
+        {
+            //HERE YOU WILL GET A NULLPOINTER IF CURSOR IS NULL
+            //THIS CAN BE, IF YOU USED OI FILE MANAGER FOR PICKING THE MEDIA
+            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+            cursor.moveToFirst();
+            return cursor.getString(column_index);
+        }
+        else return null;
+    }
+    */
+
     public void btExit(View view) {
         StopService();
         System.exit(0);
@@ -662,18 +725,18 @@ stopService(btSrv);
 
         if (mBTSrv==null)
         {
-            addLog("Start the service if you want to do anything\n" );
+            addLog("Start the service if you want to do anything" );
             return;
         }
         else
         {
-            addLog(formatTime(System.currentTimeMillis(), "HH:mm:ss")+"Service ref found\n");
+            addLog(formatTime(System.currentTimeMillis(), "HH:mm:ss")+"Service ref found");
         }
 
         try {
             mBTSrv.mHailTimeoutSecs = Long.parseLong(hailTimeout.getText().toString());
         } catch (NumberFormatException ex){
-            addLog("ERROR: hailTimeout EditText is not a number +\n" );
+            addLog("ERROR: hailTimeout EditText is not a number" );
         }
 
         try {
@@ -681,7 +744,7 @@ stopService(btSrv);
             if (btdev_dtime != null)
                 mBTSrv.setBTDiscoveryInterval(Long.parseLong(btdev_dtime.getText().toString()));
         } catch (NumberFormatException ex){
-            addLog("ERROR: hailTimeout EditText is not a number +\n" );
+            addLog("ERROR: hailTimeout EditText is not a number" );
         }
 
         fetchSrvData();
@@ -719,7 +782,7 @@ stopService(btSrv);
     }
 
     protected void addDevHist(BTDevice d) {
-        addDevHist(d.name + "/" + d.address + "/hailed: #" + d.hailCount + " " + formatTime(d.time, "MM.dd HH:mm:ss") + " " + d.strMajorClass + "\n");
+        addDevHist(d.name + "/" + d.address + "/hailed: #" + d.hailCount + " " + formatTime(d.time, "MM.dd HH:mm:ss") + " " + d.strMajorClass);
     }
 
     protected void addDevHist(String s) {
@@ -731,21 +794,21 @@ stopService(btSrv);
     }
 
     protected void clearDevHist() {
-        devHist.setText("Hailed Devices:\n");
+        devHist.setText("Hailed Devices:");
     }
 
 
     protected void addLog(String s) {
 
         String message = log.getText().toString();
-        message = message + s;
+        message = message + s + "\n";
         log.setText(message);
 
     }
 
     protected void clearLog() {
 
-        log.setText("Log:\n");
+        log.setText("Log:");
 
     }
 
@@ -798,7 +861,7 @@ stopService(btSrv);
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            addLog( "Received action: " + action + ":\n");
+            addLog( "Received action: " + action );
             // When discovery finds a device
             if ( action.equals(BTscanService.NOTIFICATION_HAILED) ) {
 
@@ -806,14 +869,14 @@ stopService(btSrv);
                 fetchSrvData();
                 //displayLastHailed();
 
-                addLog( "RECEIVED: new hail \n"  );
+                addLog( "RECEIVED: new hail"  );
             }
 
             if ( action.equals(BTscanService.NOTIFICATION_BTSCAN_FINISHED) ) {
                 clearLog();
                 fetchSrvData();
                 //displayLastHailed();
-                addLog( "RECEIVED: bt scan done\n"  );
+                addLog( "RECEIVED: bt scan done"  );
             }
         }
     };
