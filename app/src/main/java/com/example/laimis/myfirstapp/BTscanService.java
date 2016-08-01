@@ -524,13 +524,12 @@ public class BTscanService extends Service {
 
     int originalVolume;
 
-    public void hailDev(BTDevice dev){
 
-        lastHailedDev = dev;
+    public void playHail()
+    {
         try {
             originalVolume = mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
-        //playing sound
-        if (mPlayerSound) {
+            //playing sound
             /*if (!mVolumeLow) {
                 addLog("PLAY LOUD: LowrequestAudioFocus ");
                 int result = mAudioManager.requestAudioFocus(afChangeListener,
@@ -550,19 +549,19 @@ public class BTscanService extends Service {
                 //addLog("VOLUME: set min volume: ");
             }*/
 
-            addLog("VOLUME: RequestAudioFocus");
-            int result = mAudioManager.requestAudioFocus(afChangeListener,
-                    // Use the music stream.
-                    AudioManager.STREAM_MUSIC,
-                    // Request permanent focus.
-                    AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
-            if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
-                addLog("VOLUME: requestAudioFocus granted");
-            } else {
-                addLog("VOLUME: requestAudioFocus not granted");
-            }
+                addLog("VOLUME: RequestAudioFocus");
+                int result = mAudioManager.requestAudioFocus(afChangeListener,
+                        // Use the music stream.
+                        AudioManager.STREAM_MUSIC,
+                        // Request permanent focus.
+                        AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
+                if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+                    addLog("VOLUME: requestAudioFocus granted");
+                } else {
+                    addLog("VOLUME: requestAudioFocus not granted");
+                }
 
-            mediaPlayer.setWakeMode(this.getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
+                mediaPlayer.setWakeMode(this.getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
             /*mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener()
             {
                 @Override
@@ -572,23 +571,30 @@ public class BTscanService extends Service {
                    // addLog("VOLUME: reset back to original");
                 }
             });*/
-            mediaPlayer.start(); // no need to call prepare(); create() does that for you
+                mediaPlayer.start(); // no need to call prepare(); create() does that for you
 
-        } else {
-            addLog("***Hailing sound turned off");
+
         }
+        catch (Exception e) {
+            StringWriter sw = new StringWriter();
+            e.printStackTrace(new PrintWriter(sw));
+            String exceptionAsString = sw.toString();
+            addLog(exceptionAsString);
+
+        }
+    }
+
+    public void hailDev(BTDevice dev){
+
+        lastHailedDev = dev;
+        if (mPlayerSound) {
+            playHail();
+        } else
+            addLog("***Hailing sound turned off");
 
         //sending hail to main window
         Intent intent = new Intent(NOTIFICATION_HAILED);
         sendBroadcast(intent);
-    }
-    catch (Exception e) {
-        StringWriter sw = new StringWriter();
-        e.printStackTrace(new PrintWriter(sw));
-        String exceptionAsString = sw.toString();
-        addLog(exceptionAsString);
-
-    }
     }
 
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {

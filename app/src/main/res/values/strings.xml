@@ -4,6 +4,8 @@
     <string name="button_send">Send</string>
     <string name="button_exit">Exit</string>
     <string name="button_pick_audio">Select hail</string>
+    <string name="button_test_sound">Play</string>
+
 
     <string name="action_settings">Settings</string>
     <string name="action_stop">Stop service</string>

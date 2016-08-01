@@ -138,6 +138,11 @@
         android:text="Hail audio"
         android:id="@+id/hailAudio"
         android:layout_weight="0.06" />
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/button_test_sound"
+        android:onClick="btTestSound" />
 
     <Button
         android:layout_width="wrap_content"

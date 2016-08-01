@@ -734,10 +734,14 @@ stopService(btSrv);
         if(cursor!=null)
         if (cursor.moveToFirst() )        {
             return cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DISPLAY_NAME));
-        } else return "Unknown move";
-        else return "Unknown cursor";
+        } else return uri.toString()+"[umove]";
+        else return uri.toString()+"[ucur]";
     }
 
+    public void btTestSound(View view) {
+        if (mBTSrv==null) return;
+        mBTSrv.playHail();
+    }
 
     public void btExit(View view) {
         StopService();
