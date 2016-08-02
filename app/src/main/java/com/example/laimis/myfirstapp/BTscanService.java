@@ -694,8 +694,8 @@ public class BTscanService extends Service {
             }
 
             public void onSensorChanged(SensorEvent event) {
-                addLog("distance " + String.valueOf(event.values[0]) );
-                addLog("MaximumRange " + String.valueOf(mProximitySensor.getMaximumRange()) );
+                addLogDYN("distance " + String.valueOf(event.values[0]) );
+                addLogDYN("MaximumRange " + String.valueOf(mProximitySensor.getMaximumRange()) );
                 /*
                 if (event.values[0] < mProximitySensor.getMaximumRange()) {
                     // Lower the volume
