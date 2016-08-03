@@ -130,6 +130,7 @@ public class BTscanService extends Service {
             if (mediaPlayer != null && mAudioUri != null) {
                 mediaPlayer.reset();
                 mediaPlayer.setDataSource(this.getApplicationContext(), mAudioUri);
+                mediaPlayer.prepare();
                 addLog("AUDIO: set audio source to " + mAudioUri.toString());
             }
         } catch (Exception e ) {
@@ -501,14 +502,14 @@ public class BTscanService extends Service {
     private final AudioManager.OnAudioFocusChangeListener afChangeListener =
             new AudioManager.OnAudioFocusChangeListener() {
                 public void onAudioFocusChange(int focusChange) {
-                    addLog("VOLUME: audio focus received: "+focusChange);
+                    addLogDYN("VOLUME: audio focus received: "+focusChange);
                     if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK
                             || focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT
                             || focusChange == AudioManager.AUDIOFOCUS_LOSS ) {
                         // Lower the volume
                         if (mediaPlayer!=null && mAudioManager!=null) {
                             mediaPlayer.setVolume(1, 1);
-                            addLog("VOLUME: LOW volume");
+                            addLogDYN("VOLUME: LOW volume");
                         }
                     } else if (focusChange == AudioManager.AUDIOFOCUS_GAIN
                             || focusChange == AudioManager.AUDIOFOCUS_GAIN_TRANSIENT
@@ -516,7 +517,7 @@ public class BTscanService extends Service {
                         // Raise it back to normal
                         if (mediaPlayer!=null && mAudioManager!=null) {
                             mediaPlayer.setVolume(mAudioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC), mAudioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC));
-                            addLog("VOLUME: MAX volume");
+                            addLogDYN("VOLUME: MAX volume");
                         }
                     }
                 }
@@ -572,7 +573,7 @@ public class BTscanService extends Service {
                 }
             });*/
                 mediaPlayer.start(); // no need to call prepare(); create() does that for you
-
+                addLog("MEDPLAY: play start ok");
 
         }
         catch (Exception e) {
