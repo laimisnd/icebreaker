@@ -508,7 +508,7 @@ public class BTscanService extends Service {
                             || focusChange == AudioManager.AUDIOFOCUS_LOSS ) {
                         // Lower the volume
                         if (mediaPlayer!=null && mAudioManager!=null) {
-                            mediaPlayer.setVolume(1, 1);
+                            mediaPlayer.setVolume(0, 0);
                             addLogDYN("VOLUME: LOW volume");
                         }
                     } else if (focusChange == AudioManager.AUDIOFOCUS_GAIN
@@ -556,13 +556,12 @@ public class BTscanService extends Service {
                         AudioManager.STREAM_MUSIC,
                         // Request permanent focus.
                         AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
-                if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
-                    addLog("VOLUME: requestAudioFocus granted");
-                } else {
-                    addLog("VOLUME: requestAudioFocus not granted");
-                }
+                if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) { //LND change: play only if granted
+                    addLog("VOLUME: requestAudioFocus granted, playing");
 
-                mediaPlayer.setWakeMode(this.getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
+
+
+                    mediaPlayer.setWakeMode(this.getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
             /*mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener()
             {
                 @Override
@@ -572,8 +571,11 @@ public class BTscanService extends Service {
                    // addLog("VOLUME: reset back to original");
                 }
             });*/
-                mediaPlayer.start(); // no need to call prepare(); create() does that for you
-                addLog("MEDPLAY: play start ok");
+                    mediaPlayer.start(); // no need to call prepare(); create() does that for you
+                    addLog("MEDPLAY: play start ok");
+                } else {
+                    addLog("VOLUME: requestAudioFocus not granted, not playing");
+                }
 
         }
         catch (Exception e) {
