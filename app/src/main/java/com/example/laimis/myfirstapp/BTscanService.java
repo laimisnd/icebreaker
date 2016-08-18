@@ -41,6 +41,7 @@ import java.util.Map;
 
 public class BTscanService extends Service {
 
+    public int mVolume;
     private static final boolean DYNLOG=false;
 
     public static int NOTIFICATION_ID_FOREGROUND_SERVICE=123;
@@ -242,6 +243,7 @@ public class BTscanService extends Service {
         mPrevDevLst = new ArrayList<>();
 
         mAudioManager = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
+        mVolume=mAudioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 
         mediaPlayer=null;
@@ -509,6 +511,7 @@ public class BTscanService extends Service {
                         // Lower the volume
                         if (mediaPlayer!=null && mAudioManager!=null) {
                             mediaPlayer.setVolume(0, 0);
+                            mVolume=0;
                             addLogDYN("VOLUME: LOW volume");
                         }
                     } else if (focusChange == AudioManager.AUDIOFOCUS_GAIN
@@ -517,6 +520,7 @@ public class BTscanService extends Service {
                         // Raise it back to normal
                         if (mediaPlayer!=null && mAudioManager!=null) {
                             mediaPlayer.setVolume(mAudioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC), mAudioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC));
+                            mVolume=mAudioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
                             addLogDYN("VOLUME: MAX volume");
                         }
                     }
@@ -557,7 +561,7 @@ public class BTscanService extends Service {
                         // Request permanent focus.
                         AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
                 if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) { //LND change: play only if granted
-                    addLog("VOLUME: requestAudioFocus granted, playing");
+                    addLog("VOLUME: requestAudioFocus granted, audio level: "+mVolume);
 
 
 
@@ -652,7 +656,7 @@ public class BTscanService extends Service {
                                                         device.getAddress(),
                                                         st,
                                                         (device.getBluetoothClass() != null) ? device.getBluetoothClass().getMajorDeviceClass():0,
-                                                        getDeviceClassStr(device)
+                                                        getDeviceClassStr(device), "AudioVol:"+ mVolume
                             );
                             mHailedDevs.put(device.getAddress(), ndev);
 

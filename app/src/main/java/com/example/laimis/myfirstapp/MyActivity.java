@@ -163,7 +163,7 @@ public class MyActivity extends AppCompatActivity {
         addLog("srv name:" + mBTSrv.getClass().getName());
 
         addLog("srv timer ticker:" + mBTSrv.mCnt);
-
+        addLog("srv audio level:" + mBTSrv.mVolume);
         addLog("srv mHailTimeoutSecs:" + mBTSrv.getHailTimeoutSecs());
         addLog("srv Timer Interval:" + mBTSrv.getBTDiscoveryInterval());
         addLog("srv destroyed:" + mBTSrv.mDestroyed);
@@ -811,7 +811,7 @@ stopService(btSrv);
     }
 
     protected void addDevHist(BTDevice d) {
-        addDevHist(d.name + "/" + d.address + "/hailed: #" + d.hailCount + " " + formatTime(d.time, "MM.dd HH:mm:ss") + " " + d.strMajorClass);
+        addDevHist(d.name + "/hailed: #" + d.hailCount + " " + formatTime(d.time, "MM.dd HH:mm:ss") + " " + d.strMajorClass + " " + d.dbg);
     }
 
     protected void addDevHist(String s) {
