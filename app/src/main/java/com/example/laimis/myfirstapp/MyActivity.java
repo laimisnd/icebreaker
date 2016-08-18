@@ -817,7 +817,7 @@ stopService(btSrv);
     protected void addDevHist(String s) {
 
         String message = devHist.getText().toString();
-        message = message + s;
+        message = message + s + "\n";
         devHist.setText(message);
 
     }
