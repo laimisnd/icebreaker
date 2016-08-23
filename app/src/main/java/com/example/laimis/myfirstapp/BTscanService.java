@@ -106,7 +106,7 @@ public class BTscanService extends Service {
     }
 
     public void addLog(String msg) {
-        mlog.add(msg);
+        mlog.add( formatTime(System.currentTimeMillis(), "dd HH:mm:ss")+": "+msg);
         if (mlog.size()>75) mlog.removeFirst();
     }
     public void clearLog(){
@@ -563,6 +563,20 @@ public class BTscanService extends Service {
                 if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) { //LND change: play only if granted
                     addLog("VOLUME: requestAudioFocus granted, audio level: "+mVolume);
 
+                    try {
+
+                        if (mediaPlayer != null && mAudioUri != null) {
+                            mediaPlayer.reset();
+                            mediaPlayer.setDataSource(this.getApplicationContext(), mAudioUri);
+                            mediaPlayer.prepare();
+                            addLog("MEDPLAY: reset/prepare done");
+                        }
+                    } catch (Exception e ) {
+                        StringWriter sw = new StringWriter();
+                        e.printStackTrace(new PrintWriter(sw));
+                        String exceptionAsString = sw.toString();
+                        addLog(exceptionAsString);
+                    }
 
 
                     mediaPlayer.setWakeMode(this.getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
@@ -575,8 +589,16 @@ public class BTscanService extends Service {
                    // addLog("VOLUME: reset back to original");
                 }
             });*/
+                    if (mVolume>0) {
+                        mVolume=mAudioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+                        mediaPlayer.setVolume(mVolume, mVolume);
+                        addLog("MEDPLAY: mVolume set to MAX: "+mVolume);
+                    } else {
+                        addLog("MEDPLAY: mVolume set to MIN: "+mVolume);
+                    }
+
                     mediaPlayer.start(); // no need to call prepare(); create() does that for you
-                    addLog("MEDPLAY: play start ok");
+                    addLog("MEDPLAY: play started ok");
                 } else {
                     addLog("VOLUME: requestAudioFocus not granted, not playing");
                 }
